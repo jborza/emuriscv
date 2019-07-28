@@ -3,6 +3,10 @@
 #include "opcodes.h"
 #include "instruction.h"
 
+#define GET_RD(instruction) (instruction >> 7) & 0x1F
+#define GET_RS1(instruction) (instruction >> 15) & 0x1F
+#define GET_RS2(instruction) (instruction >> 20) & 0x1F
+
 int decode_opcode(word* instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
 	InstructionAny* any = instruction;
@@ -36,34 +40,33 @@ inline word get_reg(State* state, int index) {
 }
 
 void lui(State* state, word* instruction) {
-	//LUI
 	InstructionU* in = instruction;
 	word value = in->data << 12;
-	set_reg(state, in->rd, get_reg(state, in->rd) | value);
+	set_reg(state, GET_RD(*instruction), get_reg(state, GET_RD(*instruction)) | value);
 }
 
 void addi(State* state, word* instruction) {
 	InstructionI* in = instruction;
-	word value = get_reg(state,get_rs1(instruction)) + in->imm;
-	set_reg(state, get_rd(instruction), value);
+	word value = get_reg(state,GET_RS1(*instruction)) + in->imm;
+	set_reg(state, GET_RD(*instruction), value);
 }
 
 void slli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
-	word value = get_reg(state, in->rs1) << in->shamt;
-	set_reg(state, in->rd, value);
+	word value = get_reg(state, GET_RS1(*instruction)) << in->shamt;
+	set_reg(state, GET_RD(*instruction), value);
 }
 
 void srli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
-	word value = get_reg(state, in->rs1) >> in->shamt;
-	set_reg(state, in->rd, value);
+	word value = get_reg(state, GET_RS1(*instruction)) >> in->shamt;
+	set_reg(state, GET_RD(*instruction), value);
 }
 
 void add(State* state, word* instruction) {
 	InstructionR* in = instruction;
-	word value = get_reg(state, in->rs1) + get_reg(state, in->rs2);
-	set_reg(state, in->rd, value);
+	word value = get_reg(state, GET_RS1(*instruction)) + get_reg(state, GET_RS2(*instruction));
+	set_reg(state, GET_RD(*instruction), value);
 }
 
 void emulate_op(State* state) {

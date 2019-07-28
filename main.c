@@ -39,34 +39,26 @@ void test_addi() {
 		printf("Assertion failed!");
 }
 
-int main(int argc, char* argv[]) {
-	test_addi();
-	int program[] =
-	{
-		0xcafec537,                //lui     a0,0xcafec
-		0xabe50513                //addi    a0,a0,-1346 # 0xcafebabe
+void test_slli() {
+	int program[] = {
+		0x00033537,		//lui	    a0,0x33
+		0xbfb50513,		//addi	a0,a0,-1029
+		0x00e51513,		//slli	a0,a0,0xe
+		0xabe50513		//addi	a0,a0,-1346
 	};
-
-	int program2[] = {
-		0x00032537,//          	lui	    a0,0x32
-		0xbfb50513,//          	addi	a0,a0,-1029
-		0x00e51513,//          	slli	a0,a0,0xe
-		0xabe50513//          	addi	a0,a0,-1346
-	};
-
-	int program3[] = { 0x0ff88893 };
-
 	State state;
 	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	for (int i = 0; i < 4; i++)
+	{
+		emulate_op(&state);
+		print_registers(&state);
+	}
+	if (state.x[10] != 0xcafebabe)
+		printf("Assertion failed!");
+}
 
-	//load program
-	memcpy(state.memory, program3, sizeof(program));
-
-	print_registers(&state);
-
-	emulate_op(&state);
-	print_registers(&state);
-	emulate_op(&state);
-	print_registers(&state);
-
+int main(int argc, char* argv[]) {
+	test_addi();
+	test_slli();
 }
