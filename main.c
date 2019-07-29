@@ -58,7 +58,26 @@ void test_slli() {
 		printf("Assertion failed!");
 }
 
+void test_add() {
+	int program[] = {
+		0x00100093, //li x1, 1
+		0x00100113, //li x2, 1
+		0x00208f33 //add x30, x1, x2
+	};
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	for (int i = 0; i < 3; i++)
+	{
+		emulate_op(&state);
+		print_registers(&state);
+	}
+	if (state.x[30] != 0x2)
+		printf("Assertion failed!");
+}
+
 int main(int argc, char* argv[]) {
 	test_addi();
 	test_slli();
+	test_add();
 }
