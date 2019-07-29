@@ -1,16 +1,35 @@
 #include <stdio.h>
 #include "cpu.h"
 #include <memory.h>
+#include "ecall.h"
+#include "test.h"
+
+int last_exit_code = 0;
+const int SUCCESS = 42;
+const int FAIL = 0;
+
+void set_last_exit_code(int code) {
+	last_exit_code = code;
+}
+
+void check_test_exit_code() {
+	if (last_exit_code == FAIL) {
+		printf("TEST FAILED!\n");
+		exit(1);
+	}
+}
 
 void clear_state(State* state) {
 	//clear the registers
 	for (int i = 0; i < REGISTERS; i++)
 		state->x[i] = 0;
 	state->pc = 0;
+	state->status = RUNNING;
 	//clear the memory
 	const int memory_size = 1024 * 1024;
 	state->memory = malloc(memory_size);
 	memset(state->memory, 0, sizeof(byte) * memory_size);
+	set_last_exit_code(0);
 }
 
 void print_registers(State* state) {
@@ -104,7 +123,7 @@ void test_add2() {
 
 void test_ecall() {
 	int program[] = {
-		0x00000513, //li a0, 0
+		0x02a00513, //li a0, 42
 		0x05d00893, //li a7, 93
 		0x00000073 //ecall
 	};
@@ -116,27 +135,27 @@ void test_ecall() {
 		printf("%8X\n", state.memory[state.pc]);
 		emulate_op(&state);
 		print_registers(&state);
+		if (state.status == EXIT_TERMINATION) {
+			check_test_exit_code();
+			break;
+		}
 	}
+	printf("Test passed\n");
 }
 
-ecall_callback_t test_ecall_callback(State* state) {
-	//tests use a7 = 93
-	if (state->x[17] == 93) {
-		const int SUCCESS = 42;
-		const int FAIL = 0;
-		//compare a0 to 42 (success) or 0 (fail)
-		if (state->x[10] == FAIL) {
-			printf("Test failure!");
-			exit(1);
-		}
+void test_ecall_callback(State* state) {
+	//tests use a7 = EXIT (93)
+	if (state->x[SYSCALL_REG] == EXIT) {
+		set_last_exit_code(state->x[SYSCALL_ARG0]);
+		state->status = EXIT_TERMINATION;
 	}
 }
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 	test_ecall();
-	test_add2();
+	/*test_add2();
 	test_addi();
 	test_slli();
-	test_add();
+	test_add();*/
 }

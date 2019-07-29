@@ -124,15 +124,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpu.h" />
+    <ClInclude Include="ecall.h" />
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="opcodes.h" />
     <ClInclude Include="specifications.h" />
     <ClInclude Include="state.h" />
+    <ClInclude Include="test.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu.c" />
+    <ClCompile Include="ecall.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="memory.c" />
   </ItemGroup>
