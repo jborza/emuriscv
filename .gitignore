@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs/emuriscv/v16
+/Debug
+/emuriscv.vcxproj.user
+/emuriscv.vcxproj.filters
