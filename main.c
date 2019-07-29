@@ -76,7 +76,66 @@ void test_add() {
 		printf("Assertion failed!");
 }
 
+void test_add2() {
+	int program[] = {
+		0x00100093,
+		0x00100113,
+		0x00208f33,
+		0x00200e93,
+		0x00300193,
+		0x01df1863,
+		0x02a00513,
+		0x05d00893,
+		0x00000073,
+		0x00000513,
+		0x05d00893,
+		0x00000073
+	};
+	//execute until ecall
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	for (;;) {
+		printf("%8X\n", state.memory[state.pc]);
+		emulate_op(&state);
+		print_registers(&state);
+	}
+}
+
+void test_ecall() {
+	int program[] = {
+		0x00000513, //li a0, 0
+		0x05d00893, //li a7, 93
+		0x00000073 //ecall
+	};
+	//execute until ecall
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	for (;;) {
+		printf("%8X\n", state.memory[state.pc]);
+		emulate_op(&state);
+		print_registers(&state);
+	}
+}
+
+ecall_callback_t test_ecall_callback(State* state) {
+	//tests use a7 = 93
+	if (state->x[17] == 93) {
+		const int SUCCESS = 42;
+		const int FAIL = 0;
+		//compare a0 to 42 (success) or 0 (fail)
+		if (state->x[10] == FAIL) {
+			printf("Test failure!");
+			exit(1);
+		}
+	}
+}
+
 int main(int argc, char* argv[]) {
+	set_ecall_callback(&test_ecall_callback);
+	test_ecall();
+	test_add2();
 	test_addi();
 	test_slli();
 	test_add();

@@ -99,3 +99,7 @@
 #define MASK_SD  0x707f
 #define MATCH_FENCE 0xf
 #define MASK_FENCE  0x707f
+#define MATCH_ECALL 0x73
+#define MASK_ECALL  0xffffffff
+#define MATCH_EBREAK 0x100073
+#define MASK_EBREAK  0xffffffff

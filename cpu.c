@@ -7,6 +7,16 @@
 #define GET_RS1(instruction) (instruction >> 15) & 0x1F
 #define GET_RS2(instruction) (instruction >> 20) & 0x1F
 
+ecall_callback_t ecall_callback;
+
+void set_ecall_callback(ecall_callback_t callback) {
+	ecall_callback = callback;
+}
+
+void ecall(State* state, word* instruction) {
+	ecall_callback(state);
+}
+
 int decode_opcode(word* instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
 	InstructionAny* any = instruction;
@@ -69,6 +79,9 @@ void add(State* state, word* instruction) {
 	set_reg(state, GET_RD(*instruction), value);
 }
 
+
+
+
 void emulate_op(State* state) {
 	word* instruction = fetch_next_word(state);
 	if ((*instruction & MASK_LUI) == MATCH_LUI) {
@@ -85,5 +98,12 @@ void emulate_op(State* state) {
 	}
 	else if ((*instruction & MASK_ADD) == MATCH_ADD) {
 		add(state, instruction);
+	}
+	else if ((*instruction & MASK_ECALL) == MATCH_ECALL) {
+		ecall(state, instruction);
+	}
+	else {
+		printf("Unknown instruction: %8X ", *instruction);
+		return 1;
 	}
 }
