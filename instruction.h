@@ -49,3 +49,13 @@ typedef struct InstructionS {
 	int rs2 : 5;
 	int imm : 3;
 } InstructionS;
+
+//B-type
+typedef struct InstructionB {
+	int opcode : 7;
+	int rd : 5;
+	int funct3 : 3;
+	int rs1 : 5;
+	int rs2 : 5;
+	int imm : 3;
+} InstructionB;

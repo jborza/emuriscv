@@ -3,11 +3,10 @@
 #include "opcodes.h"
 #include "instruction.h"
 
-#define GET_RD(instruction) (instruction >> 7) & 0x1F
-#define GET_RS1(instruction) (instruction >> 15) & 0x1F
-#define GET_RS2(instruction) (instruction >> 20) & 0x1F
-
-
+#define GET_RD(x) (x >> 7) & 0x1F
+#define GET_RS1(x) (x >> 15) & 0x1F
+#define GET_RS2(x) (x >> 20) & 0x1F
+#define GET_B_IMM(x) (((((x >> 20) & 0xFFFFFFE0) | ((x >> 7) & 0x0000001F)) & 0xFFFFF7FE) | (((((x >> 20) & 0xFFFFFFE0) | ((x >> 7) & 0x0000001F)) & 0x00000001) << 11))
 
 int decode_opcode(word* instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
@@ -71,8 +70,23 @@ void add(State* state, word* instruction) {
 	set_reg(state, GET_RD(*instruction), value);
 }
 
-void ecall(State* state, word* instruction) {
-	ecall_callback(state);
+void beq(State* state, word* instruction) {
+	if (get_reg(state, GET_RS1(*instruction)) == get_reg(state, GET_RS1(*instruction)))
+	{
+		//set PC = PC + offset
+		int offset = GET_B_IMM(*instruction);
+		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
+	}
+}
+
+void bne(State* state, word* instruction) {
+	//branch if src1 and src2 not equal
+	if (get_reg(state, GET_RS1(*instruction)) != get_reg(state, GET_RS1(*instruction)))
+	{
+		//set PC = PC + offset
+		int offset = GET_B_IMM(*instruction);
+		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
+	}
 }
 
 void emulate_op(State* state) {
@@ -94,6 +108,12 @@ void emulate_op(State* state) {
 	}
 	else if ((*instruction & MASK_ECALL) == MATCH_ECALL) {
 		ecall(state, instruction);
+	}
+	else if ((*instruction & MASK_BNE) == MATCH_BNE) {
+		bne(state, instruction);
+	}
+	else if ((*instruction & MASK_BEQ) == MATCH_BEQ) {
+		beq(state, instruction);
 	}
 	else {
 		printf("Unknown instruction: %8X ", *instruction);

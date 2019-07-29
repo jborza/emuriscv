@@ -97,28 +97,34 @@ void test_add() {
 
 void test_add2() {
 	int program[] = {
-		0x00100093,
-		0x00100113,
-		0x00208f33,
-		0x00200e93,
-		0x00300193,
-		0x01df1863,
-		0x02a00513,
-		0x05d00893,
-		0x00000073,
-		0x00000513,
-		0x05d00893,
-		0x00000073
+		 0x00100093, //	addi x1,x0,0x00000001     li x1, 0x00000001
+		 0x00100113, // addi x2,x0,0x00000001     li x2, 0x00000001
+		 0x00208f33, // add x30,x1,x2             add x30, x1, x2
+		 0x00200e93, // addi x29,x0,0x00000002    li x29, 0x00000002
+		 0x00300193, // addi x3,x0,0x00000003     li gp, 3
+		 0x01df1863, // bne x30,x29,0x00000008    bne x30, x29, fail
+		 0x02a00513, // addi x10,x0,0x0000002a    li a0,42
+		 0x05d00893, // addi x17,x0,0x0000005d    li a7, 93
+		 0x00000073, // ecall                     ecall
+		 0x00000513, // addi x10,x0,0x00000000    li a0,0
+		 0x05d00893, // addi x17,x0,0x0000005d    li a7, 93
+		 0x00000073, // ecall                     ecall
 	};
 	//execute until ecall
 	State state;
 	clear_state(&state);
 	memcpy(state.memory, program, sizeof(program));
 	for (;;) {
-		printf("%8X\n", state.memory[state.pc]);
+		word* address = state.memory + state.pc;
+		printf("Instruction: 0x%08x\n", *address);
 		emulate_op(&state);
 		print_registers(&state);
+		if (state.status == EXIT_TERMINATION) {
+			check_test_exit_code();
+			break;
+		}
 	}
+	printf("Test passed\n");
 }
 
 void test_ecall() {
@@ -132,7 +138,8 @@ void test_ecall() {
 	clear_state(&state);
 	memcpy(state.memory, program, sizeof(program));
 	for (;;) {
-		printf("%8X\n", state.memory[state.pc]);
+		word* address = state.memory + state.pc;
+		printf("Instruction: 0x%08x\n", *address);
 		emulate_op(&state);
 		print_registers(&state);
 		if (state.status == EXIT_TERMINATION) {
@@ -154,8 +161,8 @@ void test_ecall_callback(State* state) {
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 	test_ecall();
-	/*test_add2();
-	test_addi();
-	test_slli();
-	test_add();*/
+	test_add2();
+	//test_addi();
+	//test_slli();
+	//test_add();
 }
