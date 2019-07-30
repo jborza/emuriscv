@@ -127,6 +127,37 @@ void test_add2() {
 	printf("Test passed\n");
 }
 
+void test_simple_bin() {
+	FILE* file = fopen("test/simple.bin", "rb");
+	if (!file) {
+		printf("Couldn't load test bin file!");
+		exit(1);
+	}
+	fseek(file, 0, SEEK_END);
+	int bin_file_size = ftell(file);
+	rewind(file);
+	byte* buffer = malloc(bin_file_size);
+	size_t read = fread(buffer, sizeof(byte), bin_file_size, file);
+	fclose(file);
+	
+
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, buffer, bin_file_size);
+
+	for (;;) {
+		word* address = state.memory + state.pc;
+		printf("Instruction: 0x%08x\n", *address);
+		emulate_op(&state);
+		print_registers(&state);
+		if (state.status == EXIT_TERMINATION) {
+			check_test_exit_code();
+			break;
+		}
+	}
+	printf("Test passed\n");
+}
+
 void test_ecall() {
 	int program[] = {
 		0x02a00513, //li a0, 42
@@ -150,6 +181,11 @@ void test_ecall() {
 	printf("Test passed\n");
 }
 
+void test_memory() {
+	//TODO assume the compact configuration - .text at 0x0000, .data at 0x2000
+	//TODO generalize test_simple_bin
+}
+
 void test_ecall_callback(State* state) {
 	//tests use a7 = EXIT (93)
 	if (state->x[SYSCALL_REG] == EXIT) {
@@ -160,9 +196,10 @@ void test_ecall_callback(State* state) {
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
+	test_simple_bin();
 	test_ecall();
 	test_add2();
-	//test_addi();
-	//test_slli();
-	//test_add();
+	test_addi();
+	test_slli();
+	test_add();
 }
