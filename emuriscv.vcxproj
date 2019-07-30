@@ -143,6 +143,11 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="memory.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="test\*.bin">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
