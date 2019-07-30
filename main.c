@@ -78,56 +78,6 @@ void test_slli() {
 		printf("Assertion failed!");
 }
 
-void test_add() {
-	int program[] = {
-		0x00100093, //li x1, 1
-		0x00100113, //li x2, 1
-		0x00208f33 //add x30, x1, x2
-	};
-	State state;
-	clear_state(&state);
-	memcpy(state.memory, program, sizeof(program));
-	for (int i = 0; i < 3; i++)
-	{
-		emulate_op(&state);
-		print_registers(&state);
-	}
-	if (state.x[30] != 0x2)
-		printf("Assertion failed!");
-}
-
-void test_add2() {
-	int program[] = {
-		 0x00100093, //	addi x1,x0,0x00000001     li x1, 0x00000001
-		 0x00100113, // addi x2,x0,0x00000001     li x2, 0x00000001
-		 0x00208f33, // add x30,x1,x2             add x30, x1, x2
-		 0x00200e93, // addi x29,x0,0x00000002    li x29, 0x00000002
-		 0x00300193, // addi x3,x0,0x00000003     li gp, 3
-		 0x01df1863, // bne x30,x29,0x00000008    bne x30, x29, fail
-		 0x02a00513, // addi x10,x0,0x0000002a    li a0,42
-		 0x05d00893, // addi x17,x0,0x0000005d    li a7, 93
-		 0x00000073, // ecall                     ecall
-		 0x00000513, // addi x10,x0,0x00000000    li a0,0
-		 0x05d00893, // addi x17,x0,0x0000005d    li a7, 93
-		 0x00000073, // ecall                     ecall
-	};
-	//execute until ecall
-	State state;
-	clear_state(&state);
-	memcpy(state.memory, program, sizeof(program));
-	for (;;) {
-		word* address = state.memory + state.pc;
-		printf("Instruction: 0x%08x\n", *address);
-		emulate_op(&state);
-		print_registers(&state);
-		if (state.status == EXIT_TERMINATION) {
-			check_test_exit_code();
-			break;
-		}
-	}
-	printf("Test passed\n");
-}
-
 byte* read_bin(char* name, int* bin_file_size) {
 	FILE* file = fopen(name, "rb");
 	if (!file) {
@@ -145,47 +95,25 @@ byte* read_bin(char* name, int* bin_file_size) {
 	return buffer;
 }
 
-void test_simple_bin() {
-	byte* buffer = read_bin("test/simple.bin", &bin_file_size);
-	
+void test_bin(char* name) {
+	printf("Starting test for: %s\n", name);
+	byte* buffer = read_bin(name, &bin_file_size);
+
 	State state;
 	clear_state(&state);
 	memcpy(state.memory, buffer, bin_file_size);
 
 	for (;;) {
 		word* address = state.memory + state.pc;
-		printf("Instruction: 0x%08x\n", *address);
+		//printf("Instruction: 0x%08x\n", *address);
 		emulate_op(&state);
-		print_registers(&state);
+		//print_registers(&state);
 		if (state.status == EXIT_TERMINATION) {
 			check_test_exit_code();
 			break;
 		}
 	}
-	printf("Test passed\n");
-}
-
-void test_ecall() {
-	int program[] = {
-		0x02a00513, //li a0, 42
-		0x05d00893, //li a7, 93
-		0x00000073 //ecall
-	};
-	//execute until ecall
-	State state;
-	clear_state(&state);
-	memcpy(state.memory, program, sizeof(program));
-	for (;;) {
-		word* address = state.memory + state.pc;
-		printf("Instruction: 0x%08x\n", *address);
-		emulate_op(&state);
-		print_registers(&state);
-		if (state.status == EXIT_TERMINATION) {
-			check_test_exit_code();
-			break;
-		}
-	}
-	printf("Test passed\n");
+	printf("Test %s passed\n", name);
 }
 
 void test_memory() {
@@ -203,12 +131,10 @@ void test_ecall_callback(State* state) {
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
-	test_simple_bin();
-	test_ecall();
-	test_add2();
-	test_addi();
-	test_slli();
-	test_add();
+	test_bin("test/simple.bin");
+	test_bin("test/add.bin");
+	test_bin("test/addi.bin");
+	test_bin("test/slli.bin");
 
 	printf("--------------------------\n");
 	printf("ALL TESTS PASSED\n");
