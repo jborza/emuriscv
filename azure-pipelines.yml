@@ -1,0 +1,36 @@
+# .NET Desktop
+# Build and run tests for .NET Desktop or Windows classic desktop solutions.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-2019'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'x86'
+  buildConfiguration: 'Release'
+
+steps:
+- task: NuGetToolInstaller@0
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  displayName: Build the C++ solution
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+    
+- task: BatchScript@1
+  name: test
+  displayName: Run test suite
+  inputs:
+    filename: '$(Build.SourcesDirectory)\Release\emuriscv.exe'
+    failOnStandardError: true
