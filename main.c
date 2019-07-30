@@ -5,6 +5,7 @@
 #include "test.h"
 
 int last_exit_code = 0;
+int bin_file_size = 0;
 const int SUCCESS = 42;
 const int FAIL = 0;
 
@@ -127,20 +128,26 @@ void test_add2() {
 	printf("Test passed\n");
 }
 
-void test_simple_bin() {
-	FILE* file = fopen("test/simple.bin", "rb");
+byte* read_bin(char* name, int* bin_file_size) {
+	FILE* file = fopen(name, "rb");
 	if (!file) {
-		printf("Couldn't load test bin file!");
+		printf("Couldn't load test bin file '%s'!", name);
 		exit(1);
+		return;
 	}
 	fseek(file, 0, SEEK_END);
-	int bin_file_size = ftell(file);
-	rewind(file);
-	byte* buffer = malloc(bin_file_size);
-	size_t read = fread(buffer, sizeof(byte), bin_file_size, file);
-	fclose(file);
-	
+	*bin_file_size = ftell(file);
 
+	rewind(file);
+	byte* buffer = malloc(*bin_file_size);
+	size_t read = fread(buffer, sizeof(byte), *bin_file_size, file);
+	fclose(file);
+	return buffer;
+}
+
+void test_simple_bin() {
+	byte* buffer = read_bin("test/simple.bin", &bin_file_size);
+	
 	State state;
 	clear_state(&state);
 	memcpy(state.memory, buffer, bin_file_size);

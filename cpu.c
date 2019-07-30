@@ -49,6 +49,7 @@ void add(State* state, word* instruction) {
 void addi(State* state, word* instruction) {
 	InstructionI* in = instruction;
 	word value = get_reg(state, GET_RS1(*instruction)) + in->imm;
+	word imm = *instruction >> 20;
 	set_reg(state, GET_RD(*instruction), value);
 }
 void and (State* state, word* instruction) {
