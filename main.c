@@ -83,7 +83,7 @@ byte* read_bin(char* name, int* bin_file_size) {
 	if (!file) {
 		printf("Couldn't load test bin file '%s'!", name);
 		exit(1);
-		return;
+		return NULL;
 	}
 	fseek(file, 0, SEEK_END);
 	*bin_file_size = ftell(file);
@@ -98,6 +98,9 @@ byte* read_bin(char* name, int* bin_file_size) {
 void test_bin(char* name) {
 	printf("Starting test for: %s\n", name);
 	byte* buffer = read_bin(name, &bin_file_size);
+	if (buffer == NULL) {
+		return;
+	}
 
 	State state;
 	clear_state(&state);
