@@ -202,4 +202,8 @@ int main(int argc, char* argv[]) {
 	test_addi();
 	test_slli();
 	test_add();
+
+	printf("--------------------------\n");
+	printf("ALL TESTS PASSED\n");
+	printf("--------------------------\n");
 }
