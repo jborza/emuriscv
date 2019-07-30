@@ -13,7 +13,6 @@ ebreak
 ecall
 fence
 fencei
-lui
 jal
 jalr
 lb

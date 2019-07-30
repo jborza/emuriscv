@@ -11,4 +11,4 @@ with open('rv32i.txt','r') as f:
         #print(line)
         print('else if ((*instruction & MASK_%s) == MATCH_%s) {' % (line.upper(), line.upper()))
         print('     %s(state, instruction);' % line)
-        print(')})')
+        print('}')
