@@ -59,6 +59,58 @@ void test_addi() {
 		printf("Assertion failed!");
 }
 
+uint32_t bextr(uint32_t src, uint32_t start, uint32_t len) {
+	return (src >> start) & ((1 << len) - 1);
+}
+
+int32_t shamt(word value) {
+	return bextr(value, 20, 6); 
+}
+
+uint32_t imm_sign(word value) {
+	return bextr(value, 31, 1);
+}
+
+int32_t get_b_imm(word value) {
+	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
+}
+
+void assert_shamt(word instruction, int expected_shamt) {
+	int actual_shamt = shamt(instruction);
+	if (actual_shamt != expected_shamt) {
+		printf("Unexpected shamt value: %d, expected %d", actual_shamt, expected_shamt);
+		exit(1);
+		return;
+	}
+}
+
+void test_shamt() {
+	word instr = 0x00009f13; //slli x30, x1, 0
+	assert_shamt(0x00009f13 /*slli x30, x1, 0*/, 0);
+	assert_shamt(0x00109f13 /*slli x30, x1, 1*/, 1);
+	assert_shamt(0x00709f13 /*slli x30, x1, 7*/, 7);
+	assert_shamt(0x00e09f13 /*slli x30, x1, 14*/, 14);
+	assert_shamt(0x01f09f13 /*slli x30, x1, 31*/, 31);
+}
+
+void assert_b_imm(word instruction, int expected_imm) {
+	int actual = get_b_imm(instruction);
+	if (actual != expected_imm) {
+		printf("Unexpected B-imm value: %d, expected %d", actual, expected_imm);
+		exit(1);
+		return;
+	}
+}
+
+void test_b_imm() {
+	assert_b_imm(0x00108a63 /* beq x1, x1, 0x0000000a */, 0x0000000a * 2);
+	assert_b_imm(0x08108263 /* beq x1, x1, 0x00000042 */, 0x00000042 * 2);
+	assert_b_imm(0x16108663 /* beq x1, x1, 0x000000b6 */, 0x000000b6 * 2);
+	assert_b_imm(0x1a108e63 /* beq x1, x1, 0x000000de */, 0x000000de * 2);
+	assert_b_imm(0x1e108e63 /* beq x1, x1, 0x000000fe */, 0x000000fe * 2);
+	assert_b_imm(0x24108463 /* beq x1, x1, 0x00000124 */, 0x00000124 * 2);
+}
+
 void test_slli() {
 	int program[] = {
 		0x00033537,		//lui	    a0,0x33
@@ -108,7 +160,7 @@ void test_bin(char* name) {
 
 	for (;;) {
 		word* address = state.memory + state.pc;
-		//printf("Instruction: 0x%08x\n", *address);
+		printf("0x%08x\t", *address);
 		emulate_op(&state);
 		//print_registers(&state);
 		if (state.status == EXIT_TERMINATION) {
@@ -134,10 +186,16 @@ void test_ecall_callback(State* state) {
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
+	test_shamt();
+	test_b_imm();
+	test_bin("test/beq.bin");
 	test_bin("test/simple.bin");
-	test_bin("test/add.bin");
-	test_bin("test/addi.bin");
+	test_bin("test/sltu.bin");
 	test_bin("test/slli.bin");
+	test_bin("test/addi.bin");
+	test_bin("test/add.bin");
+	//	test_bin("test/sub.bin");
+	//	test_bin("test/slti.bin");
 
 	printf("--------------------------\n");
 	printf("ALL TESTS PASSED\n");
