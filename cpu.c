@@ -3,6 +3,8 @@
 #include "opcodes.h"
 #include "instruction.h"
 #include "ecall.h"
+#include <stdio.h>
+#include "debug.h"
 
 #define GET_RD(x) (x >> 7) & 0x1F
 #define GET_RS1(x) (x >> 15) & 0x1F
@@ -14,6 +16,18 @@ int decode_opcode(word * instruction) {
 	InstructionAny* any = instruction;
 	//get lower OPCODE_BITS bits
 	return any->opcode;
+}
+
+int get_rs1_value(State* state, word* instruction) {
+	return get_reg(state, GET_RS1(*instruction));
+}
+
+int get_rs2_value(State* state, word* instruction) {
+	return get_reg(state, GET_RS2(*instruction));
+}
+
+int set_rd_value(State* state, word* instruction, word value) {
+	return set_reg(state, GET_RD(*instruction), value);
 }
 
 int get_rd(word* instruction) {
@@ -43,26 +57,34 @@ inline word get_reg(State* state, int index) {
 
 void add(State* state, word* instruction) {
 	InstructionR* in = instruction;
-	word value = get_reg(state, GET_RS1(*instruction)) + get_reg(state, GET_RS2(*instruction));
-	set_reg(state, GET_RD(*instruction), value);
+	PRINT_DEBUG("add x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) + get_rs2_value(state, instruction);
+	set_rd_value(state, instruction, value);
 }
+
 void addi(State* state, word* instruction) {
 	InstructionI* in = instruction;
-	word value = get_reg(state, GET_RS1(*instruction)) + in->imm;
+	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value =  get_reg(state, GET_RS1(*instruction)) + in->imm;
 	word imm = *instruction >> 20;
 	set_reg(state, GET_RD(*instruction), value);
 }
+
 void and (State* state, word* instruction) {
 	printf("and not implemented!\n"); exit(1);
 }
+
 void andi(State* state, word* instruction) {
 	printf("andi not implemented!\n"); exit(1);
 }
+
 void auipc(State* state, word* instruction) {
 	printf("auipc not implemented!\n"); exit(1);
 }
+
 void beq(State* state, word* instruction) {
-	if (get_reg(state, GET_RS1(*instruction)) == get_reg(state, GET_RS1(*instruction)))
+	PRINT_DEBUG("beq x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), GET_B_IMM(*instruction));
+	if (get_rs1_value(state, instruction) == get_rs2_value(state, instruction))
 	{
 		//set PC = PC + offset
 		int offset = GET_B_IMM(*instruction);
@@ -83,7 +105,8 @@ void bltu(State* state, word* instruction) {
 }
 void bne(State* state, word* instruction) {
 	//branch if src1 and src2 not equal
-	if (get_reg(state, GET_RS1(*instruction)) != get_reg(state, GET_RS1(*instruction)))
+	PRINT_DEBUG("bne x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), GET_B_IMM(*instruction));
+	if (get_rs1_value(state, instruction) != get_rs2_value(state, instruction))
 	{
 		//set PC = PC + offset
 		int offset = GET_B_IMM(*instruction);
@@ -119,6 +142,7 @@ void lhu(State* state, word* instruction) {
 }
 void lui(State* state, word* instruction) {
 	InstructionU* in = instruction;
+	PRINT_DEBUG("lui x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
 	word value = in->data << 12;
 	set_reg(state, GET_RD(*instruction), get_reg(state, GET_RD(*instruction)) | value);
 }
@@ -137,25 +161,41 @@ void sb(State* state, word* instruction) {
 void sh(State* state, word* instruction) {
 	printf("sh not implemented!\n"); exit(1);
 }
+
 void sll(State* state, word* instruction) {
 	printf("sll not implemented!\n"); exit(1);
 }
+
 void slli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
+	PRINT_DEBUG("slli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
+
 	word value = get_reg(state, GET_RS1(*instruction)) << in->shamt;
 	set_reg(state, GET_RD(*instruction), value);
 }
+
 void slt(State* state, word* instruction) {
-	printf("slt not implemented!\n"); exit(1);
+	//signed comparison, if rs1 < rs2 then rd=1 else rd=0
+	PRINT_DEBUG("slt x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) < get_rs2_value(state, instruction) ? 1 : 0; 
+	set_rd_value(state, instruction, value);
 }
+
+void sltu(State* state, word* instruction) {
+	//unsigned comparison, if rs1 < rs2 then rd=1 else rd=0
+	PRINT_DEBUG("sltu x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) < get_rs2_value(state, instruction) ? 1 : 0; 
+	set_rd_value(state, instruction, value);
+}
+
+//set less than immediate
 void slti(State* state, word* instruction) {
+	//places the value 1 in register rd if register rs1 is less than the sign - extended immediate when both are treated as signed numbers, else 0 is written to rd
+
 	printf("slti not implemented!\n"); exit(1);
 }
 void sltiu(State* state, word* instruction) {
 	printf("sltiu not implemented!\n"); exit(1);
-}
-void sltu(State* state, word* instruction) {
-	printf("sltu not implemented!\n"); exit(1);
 }
 void sra(State* state, word* instruction) {
 	printf("sra not implemented!\n"); exit(1);
@@ -172,7 +212,8 @@ void srli(State* state, word* instruction) {
 	set_reg(state, GET_RD(*instruction), value);
 }
 void sub(State* state, word* instruction) {
-	printf("sub not implemented!\n"); exit(1);
+	word value = get_reg(state, GET_RS1(*instruction)) - get_reg(state, GET_RS2(*instruction));
+	set_reg(state, GET_RD(*instruction), value);
 }
 void sw(State* state, word* instruction) {
 	printf("sw not implemented!\n"); exit(1);
