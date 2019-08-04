@@ -192,7 +192,6 @@ void sll(State* state, word* instruction) {
 void slli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
 	PRINT_DEBUG("slli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
-
 	word value = get_reg(state, GET_RS1(*instruction)) << in->shamt;
 	set_reg(state, GET_RD(*instruction), value);
 }
@@ -232,7 +231,10 @@ void sra(State* state, word* instruction) {
 }
 
 void srai(State* state, word* instruction) {
-	printf("srai not implemented!\n"); exit(1);
+	InstructionIShift* in = instruction;
+	PRINT_DEBUG("srai x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
+	word value = (sword)get_rs1_value(state,instruction) >> in->shamt;
+	set_rd_value(state, instruction, value);
 }
 
 //shift right logical
@@ -245,13 +247,14 @@ void srl(State* state, word* instruction) {
 
 void srli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
-	word value = get_reg(state, GET_RS1(*instruction)) >> in->shamt;
-	set_reg(state, GET_RD(*instruction), value);
+	PRINT_DEBUG("srli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
+	word value = get_rs1_value(state, instruction) >> in->shamt;
+	set_rd_value(state, instruction, value);
 }
 
 void sub(State* state, word* instruction) {
-	word value = get_reg(state, GET_RS1(*instruction)) - get_reg(state, GET_RS2(*instruction));
-	set_reg(state, GET_RD(*instruction), value);
+	word value = get_rs1_value(state, instruction) - get_rs2_value(state, instruction);
+	set_rd_value(state, instruction, value);
 }
 
 void sw(State* state, word* instruction) {

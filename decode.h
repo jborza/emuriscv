@@ -8,3 +8,5 @@ int32_t shamt(word value);
 uint32_t imm_sign(word value);
 
 int32_t get_b_imm(word value);
+
+int32_t get_i_imm(word value);

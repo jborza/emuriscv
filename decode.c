@@ -17,3 +17,7 @@ uint32_t imm_sign(word value) {
 int32_t get_b_imm(word value) {
 	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
 }
+
+int32_t get_i_imm(word value) {
+	return bextr(value, 20, 12);
+}
