@@ -92,7 +92,11 @@ void andi(State* state, word* instruction) {
 }
 
 void auipc(State* state, word* instruction) {
-	printf("auipc not implemented!\n"); exit(1);
+	InstructionU* in = instruction;
+	PRINT_DEBUG("auipc x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
+	word offset = in->data << 12;
+	offset += state->pc - INSTRUCTION_LENGTH_BYTES; //note: it would have been nicer to increment PC after all other instructions instead of this ugly hack
+	set_rd_value(state, instruction, offset);
 }
 
 void beq(State* state, word* instruction) {
@@ -305,7 +309,11 @@ void sub(State* state, word* instruction) {
 }
 
 void sw(State* state, word* instruction) {
-	printf("sw not implemented!\n"); exit(1);
+	sword offset = get_s_imm(*instruction);
+	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
+	word value = get_rs2_value(state, instruction);
+	word address = get_rs1_value(state, instruction) + offset;
+	state->memory[address] = value;
 }
 
 void xor (State* state, word* instruction) {

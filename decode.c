@@ -21,3 +21,7 @@ int32_t get_b_imm(word value) {
 int32_t get_i_imm(word value) {
 	return bextr(value, 20, 12);
 }
+
+int32_t get_s_imm(word value) { 
+	return bextr(value, 7, 5) + (bextr(value, 25, 7) << 5); 
+}
