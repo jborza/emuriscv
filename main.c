@@ -131,6 +131,23 @@ void test_b_imm() {
 	assert_b_imm(0x24108463 /* beq x1, x1, 0x00000124 */, 0x00000124 * 2);
 }
 
+void test_addi_2() {
+	int program[] = {
+		0x80000eb7,		//lui	    x29, 0xfff80000
+		0x00008093		//addi	x29,x29,0x0
+	};
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	for (int i = 0; i < 2; i++)
+	{
+		emulate_op(&state);
+		print_registers(&state);
+	}
+	if (state.x[29] != 0x80000000)
+		printf("Assertion failed!");
+}
+
 void test_slli() {
 	int program[] = {
 		0x00033537,		//lui	    a0,0x33
@@ -207,16 +224,17 @@ void test_ecall_callback(State* state) {
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
+	test_bin("test/addi.bin");
+	test_addi_2();
 	test_bin("test/beq_bne_loop.bin");
 	test_shamt();
 	test_b_imm();
 	test_beq_1();
 	test_bin("test/simple.bin");
 	test_bin("test/beq.bin");
-	test_bin("test/sltu.bin");
-	test_bin("test/slli.bin");
-	test_bin("test/addi.bin");
 	test_bin("test/add.bin");
+	test_bin("test/slli.bin");
+	//test_bin("test/sltu.bin");
 	//	test_bin("test/sub.bin");
 	//	test_bin("test/slti.bin");
 
