@@ -207,7 +207,7 @@ void slli(State* state, word* instruction) {
 void slt(State* state, word* instruction) {
 	//signed comparison, if rs1 < rs2 then rd=1 else rd=0
 	PRINT_DEBUG("slt x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-	word value = get_rs1_value(state, instruction) < get_rs2_value(state, instruction) ? 1 : 0; 
+	word value = (sword)get_rs1_value(state, instruction) < (sword)get_rs2_value(state, instruction) ? 1 : 0; 
 	set_rd_value(state, instruction, value);
 }
 
