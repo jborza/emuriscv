@@ -18,11 +18,11 @@ int decode_opcode(word * instruction) {
 	return any->opcode;
 }
 
-int get_rs1_value(State* state, word* instruction) {
+word get_rs1_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS1(*instruction));
 }
 
-int get_rs2_value(State* state, word* instruction) {
+word get_rs2_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS2(*instruction));
 }
 
