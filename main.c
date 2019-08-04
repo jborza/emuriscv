@@ -222,8 +222,7 @@ void test_ecall_callback(State* state) {
 	}
 }
 
-int main(int argc, char* argv[]) {
-	set_ecall_callback(&test_ecall_callback);
+void run_tests() {
 	test_bin("test/addi.bin");
 	test_addi_2();
 	test_bin("test/beq_bne_loop.bin");
@@ -234,9 +233,21 @@ int main(int argc, char* argv[]) {
 	test_bin("test/beq.bin");
 	test_bin("test/add.bin");
 	test_bin("test/slli.bin");
-	//test_bin("test/sltu.bin");
-	//	test_bin("test/sub.bin");
+	test_bin("test/sltu.bin");
+	test_bin("test/sub.bin");
+	test_bin("test/and.bin");
+	test_bin("test/or.bin");
+	test_bin("test/xor.bin");
+	test_bin("test/sll.bin");
+	test_bin("test/srl.bin");
+	test_bin("test/sra.bin");
+}
+
+int main(int argc, char* argv[]) {
+	set_ecall_callback(&test_ecall_callback);
+	
 	//	test_bin("test/slti.bin");
+	run_tests();
 
 	printf("--------------------------\n");
 	printf("ALL TESTS PASSED\n");
