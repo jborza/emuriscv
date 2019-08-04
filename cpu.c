@@ -66,12 +66,13 @@ void addi(State* state, word* instruction) {
 	InstructionI* in = instruction;
 	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
 	word value =  get_reg(state, GET_RS1(*instruction)) + in->imm;
-	word imm = *instruction >> 20;
-	set_reg(state, GET_RD(*instruction), value);
+	set_rd_value(state, instruction, value);
 }
 
 void and (State* state, word* instruction) {
-	printf("and not implemented!\n"); exit(1);
+	PRINT_DEBUG("and x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) & get_rs2_value(state, instruction);
+	set_rd_value(state, instruction, value);
 }
 
 void andi(State* state, word* instruction) {
