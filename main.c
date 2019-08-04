@@ -14,9 +14,9 @@ void set_last_exit_code(int code) {
 	last_exit_code = code;
 }
 
-void check_test_exit_code() {
+void check_test_exit_code(State* state) {
 	if (last_exit_code == FAIL) {
-		printf("TEST FAILED!\n");
+		printf("TEST FAILED! gp=0x%08x\n",state->x[3]);
 		exit(1);
 	}
 }
@@ -77,22 +77,6 @@ void test_addi() {
 	if (state.x[30] != 0x80000000)
 		printf("Assertion failed!");
 }
-
-//uint32_t bextr(uint32_t src, uint32_t start, uint32_t len) {
-//	return (src >> start) & ((1 << len) - 1);
-//}
-//
-//int32_t shamt(word value) {
-//	return bextr(value, 20, 6); 
-//}
-//
-//uint32_t imm_sign(word value) {
-//	return bextr(value, 31, 1);
-//}
-//
-//int32_t get_b_imm(word value) {
-//	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
-//}
 
 void assert_shamt(word instruction, int expected_shamt) {
 	int actual_shamt = shamt(instruction);
@@ -202,7 +186,7 @@ void test_bin(char* name) {
 		emulate_op(&state);
 		//print_registers(&state);
 		if (state.status == EXIT_TERMINATION) {
-			check_test_exit_code();
+			check_test_exit_code(&state);
 			break;
 		}
 	}
@@ -223,30 +207,49 @@ void test_ecall_callback(State* state) {
 }
 
 void run_tests() {
-	test_bin("test/addi.bin");
 	test_addi_2();
-	test_bin("test/beq_bne_loop.bin");
 	test_shamt();
 	test_b_imm();
 	test_beq_1();
 	test_bin("test/simple.bin");
+	test_bin("test/beq_bne_loop.bin");
 	test_bin("test/beq.bin");
-	test_bin("test/add.bin");
 	test_bin("test/slli.bin");
+	//integer register-register
+	test_bin("test/add.bin");
+	test_bin("test/slt.bin");
 	test_bin("test/sltu.bin");
 	test_bin("test/sub.bin");
+	//register-immediate special
+	test_bin("test/lui.bin");
+	//TODO test_bin("test/auipc.bin");
+	//register-register logical
 	test_bin("test/and.bin");
 	test_bin("test/or.bin");
 	test_bin("test/xor.bin");
+	//register-register shifts
 	test_bin("test/sll.bin");
 	test_bin("test/srl.bin");
 	test_bin("test/sra.bin");
+	//immediate shifts
+	test_bin("test/slli.bin");
+	test_bin("test/srli.bin");
+	test_bin("test/srai.bin");
+
+	//register-register immediate logical
+	test_bin("test/andi.bin");
+	test_bin("test/ori.bin");
+	test_bin("test/xori.bin");
+
+	//register-register immediates
+	test_bin("test/addi.bin");
+	test_bin("test/slti.bin");
+	test_bin("test/sltiu.bin");
 }
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 	
-	//	test_bin("test/slti.bin");
 	run_tests();
 
 	printf("--------------------------\n");
