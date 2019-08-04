@@ -5,11 +5,11 @@
 #include "ecall.h"
 #include <stdio.h>
 #include "debug.h"
+#include "decode.h"
 
 #define GET_RD(x) (x >> 7) & 0x1F
 #define GET_RS1(x) (x >> 15) & 0x1F
 #define GET_RS2(x) (x >> 20) & 0x1F
-#define GET_B_IMM(x) (((((x >> 20) & 0xFFFFFFE0) | ((x >> 7) & 0x0000001F)) & 0xFFFFF7FE) | (((((x >> 20) & 0xFFFFFFE0) | ((x >> 7) & 0x0000001F)) & 0x00000001) << 11))
 
 int decode_opcode(word * instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
@@ -83,11 +83,11 @@ void auipc(State* state, word* instruction) {
 }
 
 void beq(State* state, word* instruction) {
-	PRINT_DEBUG("beq x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), GET_B_IMM(*instruction));
+	PRINT_DEBUG("beq x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) == get_rs2_value(state, instruction))
 	{
 		//set PC = PC + offset
-		int offset = GET_B_IMM(*instruction);
+		int offset = get_b_imm(*instruction);
 		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
 	}
 }
@@ -105,11 +105,11 @@ void bltu(State* state, word* instruction) {
 }
 void bne(State* state, word* instruction) {
 	//branch if src1 and src2 not equal
-	PRINT_DEBUG("bne x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), GET_B_IMM(*instruction));
+	PRINT_DEBUG("bne x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) != get_rs2_value(state, instruction))
 	{
 		//set PC = PC + offset
-		int offset = GET_B_IMM(*instruction);
+		int offset = get_b_imm(*instruction);
 		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
 	}
 }
@@ -227,6 +227,7 @@ void xori(State* state, word* instruction) {
 
 void emulate_op(State* state) {
 	word* instruction = fetch_next_word(state);
+	//state->pc += INSTRUCTION_LENGTH_BYTES;
 	if ((*instruction & MASK_ADD) == MATCH_ADD) {
 		add(state, instruction);
 	}

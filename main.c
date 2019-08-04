@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "ecall.h"
 #include "test.h"
+#include "decode.h"
 
 int last_exit_code = 0;
 int bin_file_size = 0;
@@ -41,6 +42,24 @@ void print_registers(State* state) {
 	}
 }
 
+void test_beq_1() {
+	int program[] = {
+		0x00000463, //beq x0,x0,0x4
+		0x00900093, //addi x1, x0, 0x9
+		0x00000013, //nop / addi x0,x0,0
+	};
+	State state;
+	clear_state(&state);
+	memcpy(state.memory, program, sizeof(program));
+	emulate_op(&state);
+	print_registers(&state);
+	emulate_op(&state);
+	if (state.x[1] != 0x0) {
+		printf("Assertion failed, x1 should be 0!");
+		exit(1);
+	}
+}
+
 void test_addi() {
 	int program[] = {
 		0x800000b7, //lui x1, 0x00080000
@@ -59,21 +78,21 @@ void test_addi() {
 		printf("Assertion failed!");
 }
 
-uint32_t bextr(uint32_t src, uint32_t start, uint32_t len) {
-	return (src >> start) & ((1 << len) - 1);
-}
-
-int32_t shamt(word value) {
-	return bextr(value, 20, 6); 
-}
-
-uint32_t imm_sign(word value) {
-	return bextr(value, 31, 1);
-}
-
-int32_t get_b_imm(word value) {
-	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
-}
+//uint32_t bextr(uint32_t src, uint32_t start, uint32_t len) {
+//	return (src >> start) & ((1 << len) - 1);
+//}
+//
+//int32_t shamt(word value) {
+//	return bextr(value, 20, 6); 
+//}
+//
+//uint32_t imm_sign(word value) {
+//	return bextr(value, 31, 1);
+//}
+//
+//int32_t get_b_imm(word value) {
+//	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
+//}
 
 void assert_shamt(word instruction, int expected_shamt) {
 	int actual_shamt = shamt(instruction);
@@ -103,6 +122,7 @@ void assert_b_imm(word instruction, int expected_imm) {
 }
 
 void test_b_imm() {
+	assert_b_imm(0xfe000ee3 /* beq x0, x0, 0xfffffffe */, 0xfffffffe * 2);
 	assert_b_imm(0x00108a63 /* beq x1, x1, 0x0000000a */, 0x0000000a * 2);
 	assert_b_imm(0x08108263 /* beq x1, x1, 0x00000042 */, 0x00000042 * 2);
 	assert_b_imm(0x16108663 /* beq x1, x1, 0x000000b6 */, 0x000000b6 * 2);
@@ -161,6 +181,7 @@ void test_bin(char* name) {
 	for (;;) {
 		word* address = state.memory + state.pc;
 		printf("0x%08x\t", *address);
+		printf("pc: 0x%08x\tx1: 0x%08x\t", state.pc, state.x[1]);
 		emulate_op(&state);
 		//print_registers(&state);
 		if (state.status == EXIT_TERMINATION) {
@@ -186,10 +207,12 @@ void test_ecall_callback(State* state) {
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
+	test_bin("test/beq_bne_loop.bin");
 	test_shamt();
 	test_b_imm();
-	test_bin("test/beq.bin");
+	test_beq_1();
 	test_bin("test/simple.bin");
+	test_bin("test/beq.bin");
 	test_bin("test/sltu.bin");
 	test_bin("test/slli.bin");
 	test_bin("test/addi.bin");

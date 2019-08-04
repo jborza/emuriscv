@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="cpu.h" />
     <ClInclude Include="debug.h" />
+    <ClInclude Include="decode.h" />
     <ClInclude Include="ecall.h" />
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
@@ -140,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu.c" />
+    <ClCompile Include="decode.c" />
     <ClCompile Include="ecall.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="memory.c" />
