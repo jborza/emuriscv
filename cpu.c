@@ -151,7 +151,9 @@ void lw(State* state, word* instruction) {
 	printf("lw not implemented!\n"); exit(1);
 }
 void or (State* state, word* instruction) {
-	printf("or not implemented!\n"); exit(1);
+	PRINT_DEBUG("or x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) | get_rs2_value(state, instruction);
+	set_rd_value(state, instruction, value);
 }
 void ori(State* state, word* instruction) {
 	printf("ori not implemented!\n"); exit(1);
@@ -220,7 +222,9 @@ void sw(State* state, word* instruction) {
 	printf("sw not implemented!\n"); exit(1);
 }
 void xor (State* state, word* instruction) {
-	printf("xor not implemented!\n"); exit(1);
+	PRINT_DEBUG("xor x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	word value = get_rs1_value(state, instruction) ^ get_rs2_value(state, instruction);
+	set_rd_value(state, instruction, value);
 }
 void xori(State* state, word* instruction) {
 	printf("xori not implemented!\n"); exit(1);
