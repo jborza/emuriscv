@@ -108,13 +108,21 @@ void beq(State* state, word* instruction) {
 //branch on greater or equal
 void bge(State* state, word* instruction) {
 	PRINT_DEBUG("bge x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
-	printf("bge not implemented!\n"); exit(1);
+	if (get_rs1_signed_value(state, instruction) >= get_rs2_signed_value(state, instruction))
+	{
+		int offset = get_b_imm(*instruction);
+		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
+	}
 }
 
 //branch on greater or equal unsigned
 void bgeu(State* state, word* instruction) {
 	PRINT_DEBUG("bgeu x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
-	printf("bgeu not implemented!\n"); exit(1);
+	if (get_rs1_value(state, instruction) >= get_rs2_value(state, instruction))
+	{
+		int offset = get_b_imm(*instruction);
+		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
+	}
 }
 
 //branch on less than
