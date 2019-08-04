@@ -226,10 +226,10 @@ void sltiu(State* state, word* instruction) {
 //shift right arithmetic
 void sra(State* state, word* instruction) {
 	PRINT_DEBUG("sra x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-
-	printf("sra not implemented!\n"); exit(1);
+	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
+	word value = (sword)get_rs1_value(state, instruction) >> shamt;
+	set_rd_value(state, instruction, value);
 }
-
 
 void srai(State* state, word* instruction) {
 	printf("srai not implemented!\n"); exit(1);
@@ -238,18 +238,22 @@ void srai(State* state, word* instruction) {
 //shift right logical
 void srl(State* state, word* instruction) {
 	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-
-	printf("srl not implemented!\n"); exit(1);
+	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
+	word value = get_rs1_value(state, instruction) >> shamt;
+	set_rd_value(state, instruction, value);
 }
+
 void srli(State* state, word* instruction) {
 	InstructionIShift* in = instruction;
 	word value = get_reg(state, GET_RS1(*instruction)) >> in->shamt;
 	set_reg(state, GET_RD(*instruction), value);
 }
+
 void sub(State* state, word* instruction) {
 	word value = get_reg(state, GET_RS1(*instruction)) - get_reg(state, GET_RS2(*instruction));
 	set_reg(state, GET_RD(*instruction), value);
 }
+
 void sw(State* state, word* instruction) {
 	printf("sw not implemented!\n"); exit(1);
 }
