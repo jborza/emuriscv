@@ -75,8 +75,12 @@ void and (State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//bitwise and on rs1 and sign-extended 12-bit immediate
 void andi(State* state, word* instruction) {
-	printf("andi not implemented!\n"); exit(1);
+	InstructionI* in = instruction;
+	PRINT_DEBUG("andi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value = get_rs1_value(state, instruction) & in->imm;
+	set_rd_value(state, instruction, value);
 }
 
 void auipc(State* state, word* instruction) {
@@ -170,8 +174,12 @@ void or (State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//bitwise or on rs1 and sign-extended 12-bit immediate
 void ori(State* state, word* instruction) {
-	printf("ori not implemented!\n"); exit(1);
+	InstructionI* in = instruction;
+	PRINT_DEBUG("ori x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value = get_rs1_value(state, instruction) | in->imm;
+	set_rd_value(state, instruction, value);
 }
 
 void sb(State* state, word* instruction) {
@@ -260,13 +268,19 @@ void sub(State* state, word* instruction) {
 void sw(State* state, word* instruction) {
 	printf("sw not implemented!\n"); exit(1);
 }
+
 void xor (State* state, word* instruction) {
 	PRINT_DEBUG("xor x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) ^ get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
+
+//bitwise xor on rs1 and sign-extended 12-bit immediate
 void xori(State* state, word* instruction) {
-	printf("xori not implemented!\n"); exit(1);
+	InstructionI* in = instruction;
+	PRINT_DEBUG("xori x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value = get_rs1_value(state, instruction) ^ in->imm;
+	set_rd_value(state, instruction, value);
 }
 
 void emulate_op(State* state) {
