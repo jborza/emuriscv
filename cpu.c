@@ -26,6 +26,14 @@ word get_rs2_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS2(*instruction));
 }
 
+sword get_rs1_signed_value(State* state, word* instruction) {
+	return (sword)get_reg(state, GET_RS1(*instruction));
+}
+
+sword get_rs2_signed_value(State* state, word* instruction) {
+	return (sword)get_reg(state, GET_RS2(*instruction));
+}
+
 int set_rd_value(State* state, word* instruction, word value) {
 	return set_reg(state, GET_RD(*instruction), value);
 }
@@ -112,7 +120,11 @@ void bgeu(State* state, word* instruction) {
 //branch on less than
 void blt(State* state, word* instruction) {
 	PRINT_DEBUG("blt x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
-	printf("blt not implemented!\n"); exit(1);
+	if (get_rs1_signed_value(state, instruction) < get_rs2_signed_value(state, instruction))
+	{
+		int offset = get_b_imm(*instruction);
+		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
+	}
 }
 
 //branch on less than unsigned

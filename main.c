@@ -248,6 +248,7 @@ void run_tests() {
 	test_bin("test/beq_bne_loop.bin");
 	test_bin("test/beq.bin");
 	test_bin("test/bltu.bin");
+	test_bin("test/blt.bin");
 }
 
 int main(int argc, char* argv[]) {
