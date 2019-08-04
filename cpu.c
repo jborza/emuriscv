@@ -144,7 +144,7 @@ void lui(State* state, word* instruction) {
 	InstructionU* in = instruction;
 	PRINT_DEBUG("lui x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
 	word value = in->data << 12;
-	set_reg(state, GET_RD(*instruction), get_reg(state, GET_RD(*instruction)) | value);
+	set_rd_value(state, instruction, value);
 }
 void lw(State* state, word* instruction) {
 	printf("lw not implemented!\n"); exit(1);
