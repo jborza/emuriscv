@@ -65,7 +65,7 @@ void add(State* state, word* instruction) {
 void addi(State* state, word* instruction) {
 	InstructionI* in = instruction;
 	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
-	word value =  get_reg(state, GET_RS1(*instruction)) + in->imm;
+	word value =  get_rs1_value(state, instruction) + in->imm;
 	set_rd_value(state, instruction, value);
 }
 
@@ -221,13 +221,19 @@ void sltu(State* state, word* instruction) {
 //set less than immediate
 void slti(State* state, word* instruction) {
 	//places the value 1 in register rd if register rs1 is less than the sign - extended immediate when both are treated as signed numbers, else 0 is written to rd
-
-	printf("slti not implemented!\n"); exit(1);
+	InstructionI* in = instruction;
+	PRINT_DEBUG("slti x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value = (sword)get_rs1_value(state, instruction) < in->imm;
+	set_rd_value(state, instruction, value);
 }
 
-
+//set less than immediate unsigned
 void sltiu(State* state, word* instruction) {
-	printf("sltiu not implemented!\n"); exit(1);
+	//places the value 1 in register rd if register rs1 is less than the sign - extended immediate when both are treated as signed numbers, else 0 is written to rd
+	InstructionI* in = instruction;
+	PRINT_DEBUG("sltiu x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
+	word value = get_rs1_value(state, instruction) < in->imm;
+	set_rd_value(state, instruction, value);
 }
 
 //shift right arithmetic
@@ -261,6 +267,7 @@ void srli(State* state, word* instruction) {
 }
 
 void sub(State* state, word* instruction) {
+	PRINT_DEBUG("sub x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) - get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
