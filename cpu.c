@@ -92,18 +92,23 @@ void beq(State* state, word* instruction) {
 		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
 	}
 }
+
 void bge(State* state, word* instruction) {
 	printf("bge not implemented!\n"); exit(1);
 }
+
 void bgeu(State* state, word* instruction) {
 	printf("bgeu not implemented!\n"); exit(1);
 }
+
 void blt(State* state, word* instruction) {
 	printf("blt not implemented!\n"); exit(1);
 }
+
 void bltu(State* state, word* instruction) {
 	printf("bltu not implemented!\n"); exit(1);
 }
+
 void bne(State* state, word* instruction) {
 	//branch if src1 and src2 not equal
 	PRINT_DEBUG("bne x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
@@ -114,6 +119,7 @@ void bne(State* state, word* instruction) {
 		state->pc += offset - INSTRUCTION_LENGTH_BYTES;
 	}
 }
+
 void ebreak(State* state, word* instruction) {
 	printf("ebreak not implemented!\n"); exit(1);
 }
@@ -126,47 +132,61 @@ void fencei(State* state, word* instruction) {
 void jal(State* state, word* instruction) {
 	printf("jal not implemented!\n"); exit(1);
 }
+
 void jalr(State* state, word* instruction) {
 	printf("jalr not implemented!\n"); exit(1);
 }
+
 void lb(State* state, word* instruction) {
 	printf("lb not implemented!\n"); exit(1);
 }
+
 void lbu(State* state, word* instruction) {
 	printf("lbu not implemented!\n"); exit(1);
 }
+
 void lh(State* state, word* instruction) {
 	printf("lh not implemented!\n"); exit(1);
 }
+
 void lhu(State* state, word* instruction) {
 	printf("lhu not implemented!\n"); exit(1);
 }
+
 void lui(State* state, word* instruction) {
 	InstructionU* in = instruction;
 	PRINT_DEBUG("lui x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
 	word value = in->data << 12;
 	set_rd_value(state, instruction, value);
 }
+
 void lw(State* state, word* instruction) {
 	printf("lw not implemented!\n"); exit(1);
 }
+
 void or (State* state, word* instruction) {
 	PRINT_DEBUG("or x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) | get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
+
 void ori(State* state, word* instruction) {
 	printf("ori not implemented!\n"); exit(1);
 }
+
 void sb(State* state, word* instruction) {
 	printf("sb not implemented!\n"); exit(1);
 }
+
 void sh(State* state, word* instruction) {
 	printf("sh not implemented!\n"); exit(1);
 }
 
 void sll(State* state, word* instruction) {
-	printf("sll not implemented!\n"); exit(1);
+	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
+	word value = get_rs1_value(state, instruction) << shamt;
+	set_rd_value(state, instruction, value);
 }
 
 void slli(State* state, word* instruction) {
@@ -197,16 +217,28 @@ void slti(State* state, word* instruction) {
 
 	printf("slti not implemented!\n"); exit(1);
 }
+
+
 void sltiu(State* state, word* instruction) {
 	printf("sltiu not implemented!\n"); exit(1);
 }
+
+//shift right arithmetic
 void sra(State* state, word* instruction) {
+	PRINT_DEBUG("sra x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+
 	printf("sra not implemented!\n"); exit(1);
 }
+
+
 void srai(State* state, word* instruction) {
 	printf("srai not implemented!\n"); exit(1);
 }
+
+//shift right logical
 void srl(State* state, word* instruction) {
+	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+
 	printf("srl not implemented!\n"); exit(1);
 }
 void srli(State* state, word* instruction) {
