@@ -212,8 +212,6 @@ void run_tests() {
 	test_b_imm();
 	test_beq_1();
 	test_bin("test/simple.bin");
-	test_bin("test/beq_bne_loop.bin");
-	test_bin("test/beq.bin");
 	test_bin("test/slli.bin");
 	//integer register-register
 	test_bin("test/add.bin");
@@ -245,6 +243,11 @@ void run_tests() {
 	test_bin("test/addi.bin");
 	test_bin("test/slti.bin");
 	test_bin("test/sltiu.bin");
+
+	//conditional branches
+	test_bin("test/beq_bne_loop.bin");
+	test_bin("test/beq.bin");
+	test_bin("test/bltu.bin");
 }
 
 int main(int argc, char* argv[]) {
