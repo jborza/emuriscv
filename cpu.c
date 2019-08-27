@@ -18,6 +18,11 @@ int decode_opcode(word * instruction) {
 	return any->opcode;
 }
 
+sword get_store_offset(word value) {
+	InstructionStore* in = &value;
+	return in->offset1 + in->offset2;
+}
+
 word get_rs1_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS1(*instruction));
 }
@@ -201,7 +206,13 @@ void lui(State* state, word* instruction) {
 }
 
 void lw(State* state, word* instruction) {
-	printf("lw not implemented!\n"); exit(1);
+	//TODO not the correct negative offset
+	//needs to be sign-extended
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("lw x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
+	word address = get_rs1_value(state, instruction) + offset;
+	word value = state->memory[address];
+	set_rd_value(state, instruction, value);
 }
 
 void or (State* state, word* instruction) {
@@ -309,6 +320,7 @@ void sub(State* state, word* instruction) {
 }
 
 void sw(State* state, word* instruction) {
+	sword offset2 = get_store_offset(*instruction);
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);

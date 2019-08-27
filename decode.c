@@ -23,5 +23,7 @@ int32_t get_i_imm(word value) {
 }
 
 int32_t get_s_imm(word value) { 
-	return bextr(value, 7, 5) + (bextr(value, 25, 7) << 5); 
+	int sign = bextr(value, 31, 1) == 1 ? -1 : 1;
+	int val = bextr(value, 6, 5) + (bextr(value, 25, 6) << 5);
+	return val * sign; 
 }
