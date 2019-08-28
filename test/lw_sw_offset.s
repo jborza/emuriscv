@@ -9,14 +9,18 @@ test2: #positive offset
 sw x1, 8 (x3)
 lw x30, 8 (x3)
 bne x30, x1, failure
-test3: #small negative offset
+test3: #large positive offset
+sw x1, 2044(x3)
+lw x30, 2044(x3)
+bne x30, x1, failure
+test4: #small negative offset
 li x3, 0x2004
 li x1, 0xdeadbeef
 sw x1, -4(x3)
 lw x30, -4(x3)
 li x31, 0xdeadbeef
 bne x30, x31, failure
-test4: #large negative offset
+test5: #large negative offset
 li x3, 0x4000
 sw x1, -996(x3)
 lw x30, -996(x3)
