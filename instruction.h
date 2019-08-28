@@ -43,11 +43,11 @@ typedef struct InstructionR {
 //S-type
 typedef struct InstructionS {
 	int opcode : 7;
-	int rd : 5;
+	int imm1 : 5;
 	int funct3 : 3;
 	int rs1 : 5;
 	int rs2 : 5;
-	int imm : 3;
+	int imm2 : 7;
 } InstructionS;
 
 //B-type
@@ -59,3 +59,8 @@ typedef struct InstructionB {
 	int rs2 : 5;
 	int imm : 3;
 } InstructionB;
+
+typedef struct StoreOffset {
+	int nothing : 20;
+	int offset : 12;
+} StoreOffset;

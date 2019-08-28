@@ -18,11 +18,6 @@ int decode_opcode(word * instruction) {
 	return any->opcode;
 }
 
-sword get_store_offset(word value) {
-	InstructionStore* in = &value;
-	return in->offset1 + in->offset2;
-}
-
 word get_rs1_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS1(*instruction));
 }
@@ -320,7 +315,6 @@ void sub(State* state, word* instruction) {
 }
 
 void sw(State* state, word* instruction) {
-	sword offset2 = get_store_offset(*instruction);
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);

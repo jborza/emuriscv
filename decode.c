@@ -1,5 +1,6 @@
 #pragma once
 #include "decode.h"
+#include "instruction.h"
 
 uint32_t bextr(uint32_t src, uint32_t start, uint32_t len) {
 	return (src >> start) & ((1 << len) - 1);
@@ -24,6 +25,9 @@ int32_t get_i_imm(word value) {
 
 int32_t get_s_imm(word value) { 
 	int sign = bextr(value, 31, 1) == 1 ? -1 : 1;
-	int val = bextr(value, 6, 5) + (bextr(value, 25, 6) << 5);
-	return val * sign; 
+	int val = bextr(value, 7, 5) + (bextr(value, 25, 7) << 5);
+	//sign extend if negative
+	if (sign == -1)
+		val |= (0xfffff000);
+	return val; 
 }
