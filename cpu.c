@@ -206,7 +206,7 @@ void lw(State* state, word* instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lw x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
-	word value = state->memory[address];
+	word value = read_word(state, address);
 	set_rd_value(state, instruction, value);
 }
 
@@ -319,7 +319,9 @@ void sw(State* state, word* instruction) {
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);
 	word address = get_rs1_value(state, instruction) + offset;
-	state->memory[address] = value;
+
+	write_word(state, address, value);
+	//state->memory[address] = value;
 }
 
 void xor (State* state, word* instruction) {
