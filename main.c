@@ -220,7 +220,7 @@ void run_tests() {
 	test_bin("test/sub.bin");
 	//register-immediate special
 	test_bin("test/lui.bin");
-	//TODO test_bin("test/auipc.bin");
+	test_bin("test/auipc.bin");
 	//register-register logical
 	test_bin("test/and.bin");
 	test_bin("test/or.bin");
@@ -256,6 +256,8 @@ void run_tests() {
 	test_bin("test/lw_sw_offset.bin");
 	test_bin("test/lh_sh.bin");
 	test_bin("test/lb_sb.bin");
+	test_bin("test/memory.bin");
+
 }
 
 int main(int argc, char* argv[]) {
