@@ -36,3 +36,12 @@ int32_t get_s_imm(word value) {
 		val |= (0xfffff000);
 	return val; 
 }
+
+int32_t get_j_imm(word value) {
+	int sign = bextr(value, 31, 1) == 1 ? -1 : 1;
+	int val = (bextr(value, 21, 10) << 1) + (bextr(value, 20, 1) << 11) + (bextr(value, 12, 8) << 12) + (bextr(value, 31, 1) << 20);
+	//sign extend if negative by 12 bits
+	if (sign == -1)
+		val |= (0xfff00000);
+	return val;
+}

@@ -166,8 +166,20 @@ void fence(State* state, word* instruction) {
 void fencei(State* state, word* instruction) {
 	PRINT_DEBUG("fencei [no-op]\n");
 }
+
+//jump and link, J-immediate, 
 void jal(State* state, word* instruction) {
-	printf("jal not implemented!\n"); exit(1);
+	//stores the address of the instruction following the jump (pc+4) into rd
+	//J-immediate encoding
+
+	//signed offset in multiples of 2 bytes
+	sword offset = get_j_imm(*instruction);
+	PRINT_DEBUG("jal x%d,0x%08x\n", GET_RD(*instruction), offset);	
+	//set register if not x0 to the target
+	word destination = state->pc + offset - INSTRUCTION_LENGTH_BYTES; 
+	word return_address = state->pc; //next instruction address
+	set_rd_value(state, instruction, return_address);
+	state->pc = destination;
 }
 
 void jalr(State* state, word* instruction) {

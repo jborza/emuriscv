@@ -257,11 +257,15 @@ void run_tests() {
 	test_bin("test/lb_sb.bin");
 	test_bin("test/memory.bin");
 
+	//jumps
+	test_bin("test/jal_long.bin");
+	test_bin("test/jal_simple.bin");
+
 }
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
-	
+
 
 	run_tests();
 

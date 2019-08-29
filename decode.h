@@ -11,4 +11,6 @@ int32_t get_b_imm(word value);
 
 int32_t get_i_imm(word value);
 
+int32_t get_j_imm(word value);
+
 int32_t get_s_imm(word value);
