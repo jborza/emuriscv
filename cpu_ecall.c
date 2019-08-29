@@ -1,4 +1,4 @@
-#include "ecall.h"
+#include "cpu_ecall.h"
 #include "debug.h"
 ecall_callback_t ecall_callback;
 

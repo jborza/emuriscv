@@ -2,7 +2,6 @@
 #include "memory.h"
 #include "opcodes.h"
 #include "instruction.h"
-#include "ecall.h"
 #include <stdio.h>
 #include "debug.h"
 #include "decode.h"
@@ -160,9 +159,7 @@ void bne(State* state, word* instruction) {
 	}
 }
 
-void ebreak(State* state, word* instruction) {
-	printf("ebreak not implemented!\n"); exit(1);
-}
+
 void fence(State* state, word* instruction) {
 	printf("fence not implemented!\n"); exit(1);
 }

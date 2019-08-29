@@ -130,7 +130,8 @@
     <ClInclude Include="cpu.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="decode.h" />
-    <ClInclude Include="ecall.h" />
+    <ClInclude Include="cpu_ebreak.h" />
+    <ClInclude Include="cpu_ecall.h" />
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="opcodes.h" />
@@ -141,8 +142,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu.c" />
+    <ClCompile Include="cpu_ebreak.c" />
     <ClCompile Include="decode.c" />
-    <ClCompile Include="ecall.c" />
+    <ClCompile Include="cpu_ecall.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="memory.c" />
   </ItemGroup>
