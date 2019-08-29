@@ -161,10 +161,10 @@ void bne(State* state, word* instruction) {
 
 
 void fence(State* state, word* instruction) {
-	printf("fence not implemented!\n"); exit(1);
+	PRINT_DEBUG("fence [no-op]\n");
 }
 void fencei(State* state, word* instruction) {
-	printf("fencei not implemented!\n"); exit(1);
+	PRINT_DEBUG("fencei [no-op]\n");
 }
 void jal(State* state, word* instruction) {
 	printf("jal not implemented!\n"); exit(1);
