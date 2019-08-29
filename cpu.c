@@ -182,8 +182,14 @@ void jal(State* state, word* instruction) {
 	state->pc = destination;
 }
 
+//jump and link register
 void jalr(State* state, word* instruction) {
-	printf("jalr not implemented!\n"); exit(1);
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("jalr x%d, x%d, 0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), offset);
+	word destination = get_rs1_value(state, instruction) + offset;
+	word return_address = state->pc;
+	set_rd_value(state, instruction, return_address);
+	state->pc = destination;
 }
 
 //load 8-bit sign-extended value from memory into rd

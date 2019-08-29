@@ -260,12 +260,14 @@ void run_tests() {
 	//jumps
 	test_bin("test/jal_long.bin");
 	test_bin("test/jal_simple.bin");
+	test_bin("test/jalr.bin");
 
 }
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 
+	test_bin("test/jalr.bin");
 
 	run_tests();
 
