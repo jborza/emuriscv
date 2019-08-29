@@ -31,6 +31,23 @@ word read_word(State* state, word address) {
 		state->memory[address + 3] << 24;
 }
 
+word read_halfword_signed(State* state, word address) {
+	word value = state->memory[address] |
+		state->memory[address + 1] << 8;
+	//sign extend 16-bit value
+	if ((value & 0x8000) == 0x8000)
+		return value | 0xffff0000;
+	else
+		return value;
+}
+
+word read_halfword_unsigned(State * state, word address) {
+	word value = state->memory[address] |
+		state->memory[address + 1] << 8;
+	return value;
+}
+
+
 word read_byte_signed(State* state, word address) {
 	word value = state->memory[address];
 	//sign extend 8-bit value

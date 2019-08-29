@@ -4,7 +4,9 @@ word* fetch_next_word(State* state);
 
 word read_word(State* state, word address);
 
-word read_halfword(State* state, word address);
+word read_halfword_signed(State* state, word address);
+
+word read_halfword_unsigned(State* state, word address);
 
 word read_byte_signed(State* state, word address);
 

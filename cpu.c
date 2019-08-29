@@ -195,12 +195,22 @@ void lbu(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//load 16-bit sign-extended value from memory into rd
 void lh(State* state, word* instruction) {
-	printf("lh not implemented!\n"); exit(1);
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("lh x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
+	word address = get_rs1_value(state, instruction) + offset;
+	word value = read_halfword_signed(state, address);
+	set_rd_value(state, instruction, value);
 }
 
+//load 16-bit zero-extended value from memory into rd
 void lhu(State* state, word* instruction) {
-	printf("lhu not implemented!\n"); exit(1);
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("lhu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
+	word address = get_rs1_value(state, instruction) + offset;
+	word value = read_halfword_unsigned(state, address);
+	set_rd_value(state, instruction, value);
 }
 
 void lui(State* state, word* instruction) {
@@ -246,7 +256,9 @@ void sb(State* state, word* instruction) {
 void sh(State* state, word* instruction) {
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sh x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
-	printf("sh not implemented!\n"); exit(1);
+	word value = get_rs2_value(state, instruction);
+	word address = get_rs1_value(state, instruction) + offset;
+	write_halfword(state, address, value);
 }
 
 void sll(State* state, word* instruction) {
@@ -331,6 +343,7 @@ void sub(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//store 32-bit value from rs to memory
 void sw(State* state, word* instruction) {
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));

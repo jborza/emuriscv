@@ -254,6 +254,7 @@ void run_tests() {
 
 	//load/save
 	test_bin("test/lw_sw_offset.bin");
+	test_bin("test/lh_sh.bin");
 	test_bin("test/lb_sb.bin");
 }
 
