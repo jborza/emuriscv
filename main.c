@@ -251,11 +251,16 @@ void run_tests() {
 	test_bin("test/blt.bin");
 	test_bin("test/bge.bin");
 	test_bin("test/bgeu.bin");
+
+	//load/save
+	test_bin("test/lw_sw_offset.bin");
+	test_bin("test/lb_sb.bin");
 }
 
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 	
+
 	run_tests();
 
 	printf("--------------------------\n");

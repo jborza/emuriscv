@@ -177,12 +177,22 @@ void jalr(State* state, word* instruction) {
 	printf("jalr not implemented!\n"); exit(1);
 }
 
+//load 8-bit sign-extended value from memory into rd
 void lb(State* state, word* instruction) {
-	printf("lb not implemented!\n"); exit(1);
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("lb x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
+	word address = get_rs1_value(state, instruction) + offset;
+	word value = read_byte_signed(state, address);
+	set_rd_value(state, instruction, value);
 }
 
+//load 8-bit zero-extended value from memory into rd
 void lbu(State* state, word* instruction) {
-	printf("lbu not implemented!\n"); exit(1);
+	sword offset = get_i_imm(*instruction);
+	PRINT_DEBUG("lbu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
+	word address = get_rs1_value(state, instruction) + offset;
+	word value = read_byte_unsigned(state, address);
+	set_rd_value(state, instruction, value);
 }
 
 void lh(State* state, word* instruction) {
@@ -200,9 +210,8 @@ void lui(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//load 32-bit value from memory into rd
 void lw(State* state, word* instruction) {
-	//TODO not the correct negative offset
-	//needs to be sign-extended
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lw x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -224,11 +233,19 @@ void ori(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+//store 8-bit value from the low bits of rs2 to the memory
 void sb(State* state, word* instruction) {
-	printf("sb not implemented!\n"); exit(1);
+	sword offset = get_s_imm(*instruction);
+	PRINT_DEBUG("sb x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
+	word value = get_rs2_value(state, instruction);
+	word address = get_rs1_value(state, instruction) + offset;
+	write_byte(state, address, value);
 }
 
+//store 16-bit value from the low bits of rs2 to the memory
 void sh(State* state, word* instruction) {
+	sword offset = get_s_imm(*instruction);
+	PRINT_DEBUG("sh x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	printf("sh not implemented!\n"); exit(1);
 }
 
@@ -319,9 +336,7 @@ void sw(State* state, word* instruction) {
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);
 	word address = get_rs1_value(state, instruction) + offset;
-
 	write_word(state, address, value);
-	//state->memory[address] = value;
 }
 
 void xor (State* state, word* instruction) {
