@@ -63,19 +63,19 @@ inline word get_reg(State* state, int index) {
 }
 
 void add(State* state, word* instruction) {
-	InstructionR* in = instruction;
 	PRINT_DEBUG("add x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) + get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
 void addi(State* state, word* instruction) {
-	InstructionI* in = instruction;
-	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
-	word value =  get_rs1_value(state, instruction) + in->imm;
+	sword imm = get_i_imm(*instruction);
+	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), imm);
+	word value =  get_rs1_value(state, instruction) + imm;
 	set_rd_value(state, instruction, value);
 }
 
+//bitwise and between rs1 and rs2
 void and (State* state, word* instruction) {
 	PRINT_DEBUG("and x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) & get_rs2_value(state, instruction);
@@ -84,9 +84,9 @@ void and (State* state, word* instruction) {
 
 //bitwise and on rs1 and sign-extended 12-bit immediate
 void andi(State* state, word* instruction) {
-	InstructionI* in = instruction;
-	PRINT_DEBUG("andi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
-	word value = get_rs1_value(state, instruction) & in->imm;
+	sword imm = get_i_imm(*instruction);
+	PRINT_DEBUG("andi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), imm);
+	word value = get_rs1_value(state, instruction) & imm;
 	set_rd_value(state, instruction, value);
 }
 
@@ -512,6 +512,6 @@ void emulate_op(State* state) {
 	}
 	else {
 		printf("Unknown instruction: %8X ", *instruction);
-		return 1;
+		return;
 	}
 }

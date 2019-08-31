@@ -105,7 +105,7 @@ void assert_b_imm(word instruction, int expected_imm) {
 }
 
 void test_b_imm() {
-	assert_b_imm(0xfe000ee3 /* beq x0, x0, 0xfffffffe */, 0xfffffffe * 2);
+	assert_b_imm(0xfe000ee3 /* beq x0, x0, 0xfffffffe */, 0xfffffffc/*0xfffffffe * 2*/);
 	assert_b_imm(0x00108a63 /* beq x1, x1, 0x0000000a */, 0x0000000a * 2);
 	assert_b_imm(0x08108263 /* beq x1, x1, 0x00000042 */, 0x00000042 * 2);
 	assert_b_imm(0x16108663 /* beq x1, x1, 0x000000b6 */, 0x000000b6 * 2);
@@ -267,7 +267,7 @@ void run_tests() {
 int main(int argc, char* argv[]) {
 	set_ecall_callback(&test_ecall_callback);
 
-	test_bin("test/jalr.bin");
+	test_bin("test/lw_sw_offset.bin");
 
 	run_tests();
 
