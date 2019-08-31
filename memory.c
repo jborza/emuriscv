@@ -1,7 +1,7 @@
 #include "memory.h"
 
 word* fetch_next_word(State* state) {
-	word* address = state->memory + state->pc;
+	word* address = (word*)(state->memory + state->pc);
 	state->pc += 4;
 	return address;
 }
@@ -29,6 +29,7 @@ word read_word(State* state, word address) {
 		state->memory[address + 1] << 8 |
 		state->memory[address + 2] << 16 |
 		state->memory[address + 3] << 24;
+	return value;
 }
 
 word read_halfword_signed(State* state, word address) {
