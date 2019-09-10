@@ -128,25 +128,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpu.h" />
+    <ClInclude Include="cpu_csr.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="decode.h" />
     <ClInclude Include="cpu_ebreak.h" />
     <ClInclude Include="cpu_ecall.h" />
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="memory_map.h" />
     <ClInclude Include="opcodes.h" />
     <ClInclude Include="specifications.h" />
     <ClInclude Include="state.h" />
     <ClInclude Include="test.h" />
     <ClInclude Include="types.h" />
+    <ClInclude Include="vm.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu.c" />
+    <ClCompile Include="cpu_csr.c" />
     <ClCompile Include="cpu_ebreak.c" />
     <ClCompile Include="decode.c" />
     <ClCompile Include="cpu_ecall.c" />
-    <ClCompile Include="main.c" />
+    <ClCompile Include="test.c" />
     <ClCompile Include="memory.c" />
+    <ClCompile Include="run_linux.c" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="test\*.bin">

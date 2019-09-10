@@ -4,6 +4,7 @@
 #include "test.h"
 #include "decode.h"
 
+#if 0
 int last_exit_code = 0;
 int bin_file_size = 0;
 const int SUCCESS = 42;
@@ -264,7 +265,7 @@ void run_tests() {
 
 }
 
-int main(int argc, char* argv[]) {
+int run_test_suite() {
 	set_ecall_callback(&test_ecall_callback);
 
 	test_bin("test/lw_sw_offset.bin");
@@ -275,3 +276,5 @@ int main(int argc, char* argv[]) {
 	printf("ALL TESTS PASSED\n");
 	printf("--------------------------\n");
 }
+
+#endif

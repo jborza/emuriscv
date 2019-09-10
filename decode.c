@@ -19,6 +19,10 @@ int32_t get_b_imm(word value) {
 	return (bextr(value, 8, 4) << 1) + (bextr(value, 25, 6) << 5) + (bextr(value, 7, 1) << 11) + (imm_sign(value) << 12);
 }
 
+uint32_t get_i_imm_unsigned(word value) {
+	return value >> 20;
+}
+
 int32_t get_i_imm(word value) {
 	int val = bextr(value, 20, 12);
 	int sign = bextr(value, 31, 1) == 1 ? -1 : 1;

@@ -5,12 +5,16 @@
 #include <stdio.h>
 #include "debug.h"
 #include "decode.h"
+#include "cpu_ecall.h"
+#include "cpu_ebreak.h"
+#include "cpu_csr.h"
 
-#define GET_RD(x) (x >> 7) & 0x1F
-#define GET_RS1(x) (x >> 15) & 0x1F
-#define GET_RS2(x) (x >> 20) & 0x1F
+#define GET_RD(x) ((x >> 7) & 0x1F)
+#define GET_RS1(x) ((x >> 15) & 0x1F)
+#define GET_CSR_IMM(x) ((x >> 15) & 0x1F)
+#define GET_RS2(x) ((x >> 20) & 0x1F)
 
-int decode_opcode(word * instruction) {
+int decode_opcode(word* instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
 	InstructionAny* any = instruction;
 	//get lower OPCODE_BITS bits
@@ -41,15 +45,15 @@ int get_rd(word* instruction) {
 	return (*instruction >> 7) & 0x1f;
 }
 
-int get_rs1(word* instruction) {
+int get_rs1(word * instruction) {
 	return (*instruction >> 15) & 0x1f;
 }
 
-int get_rs2(word* instruction) {
+int get_rs2(word * instruction) {
 	return (*instruction >> 20) & 0x1f;
 }
 
-int set_reg(State* state, int index, word value) {
+int set_reg(State * state, int index, word value) {
 	if (index == 0) {
 		//illegal instruction;
 		return -1;
@@ -58,39 +62,39 @@ int set_reg(State* state, int index, word value) {
 	return index;
 }
 
-inline word get_reg(State* state, int index) {
+inline word get_reg(State * state, int index) {
 	return state->x[index];
 }
 
-void add(State* state, word* instruction) {
+void add(State * state, word * instruction) {
 	PRINT_DEBUG("add x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) + get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
-void addi(State* state, word* instruction) {
+void addi(State * state, word * instruction) {
 	sword imm = get_i_imm(*instruction);
 	PRINT_DEBUG("addi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), imm);
-	word value =  get_rs1_value(state, instruction) + imm;
+	word value = get_rs1_value(state, instruction) + imm;
 	set_rd_value(state, instruction, value);
 }
 
 //bitwise and between rs1 and rs2
-void and (State* state, word* instruction) {
+void /**/ and(State * state, word * instruction) {
 	PRINT_DEBUG("and x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) & get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
 //bitwise and on rs1 and sign-extended 12-bit immediate
-void andi(State* state, word* instruction) {
+void andi(State * state, word * instruction) {
 	sword imm = get_i_imm(*instruction);
 	PRINT_DEBUG("andi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), imm);
 	word value = get_rs1_value(state, instruction) & imm;
 	set_rd_value(state, instruction, value);
 }
 
-void auipc(State* state, word* instruction) {
+void auipc(State * state, word * instruction) {
 	InstructionU* in = instruction;
 	PRINT_DEBUG("auipc x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
 	word offset = in->data << 12;
@@ -98,7 +102,7 @@ void auipc(State* state, word* instruction) {
 	set_rd_value(state, instruction, offset);
 }
 
-void beq(State* state, word* instruction) {
+void beq(State * state, word * instruction) {
 	PRINT_DEBUG("beq x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) == get_rs2_value(state, instruction))
 	{
@@ -109,7 +113,7 @@ void beq(State* state, word* instruction) {
 }
 
 //branch on greater or equal
-void bge(State* state, word* instruction) {
+void bge(State * state, word * instruction) {
 	PRINT_DEBUG("bge x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_signed_value(state, instruction) >= get_rs2_signed_value(state, instruction))
 	{
@@ -119,7 +123,7 @@ void bge(State* state, word* instruction) {
 }
 
 //branch on greater or equal unsigned
-void bgeu(State* state, word* instruction) {
+void bgeu(State * state, word * instruction) {
 	PRINT_DEBUG("bgeu x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) >= get_rs2_value(state, instruction))
 	{
@@ -129,7 +133,7 @@ void bgeu(State* state, word* instruction) {
 }
 
 //branch on less than
-void blt(State* state, word* instruction) {
+void blt(State * state, word * instruction) {
 	PRINT_DEBUG("blt x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_signed_value(state, instruction) < get_rs2_signed_value(state, instruction))
 	{
@@ -139,7 +143,7 @@ void blt(State* state, word* instruction) {
 }
 
 //branch on less than unsigned
-void bltu(State* state, word* instruction) {
+void bltu(State * state, word * instruction) {
 	PRINT_DEBUG("bltu x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) < get_rs2_value(state, instruction))
 	{
@@ -148,7 +152,7 @@ void bltu(State* state, word* instruction) {
 	}
 }
 
-void bne(State* state, word* instruction) {
+void bne(State * state, word * instruction) {
 	//branch if src1 and src2 not equal
 	PRINT_DEBUG("bne x%d,x%d,0x%08x\n", GET_RS1(*instruction), GET_RS2(*instruction), get_b_imm(*instruction));
 	if (get_rs1_value(state, instruction) != get_rs2_value(state, instruction))
@@ -160,30 +164,30 @@ void bne(State* state, word* instruction) {
 }
 
 
-void fence(State* state, word* instruction) {
+void fence(State * state, word * instruction) {
 	PRINT_DEBUG("fence [no-op]\n");
 }
-void fencei(State* state, word* instruction) {
+void fencei(State * state, word * instruction) {
 	PRINT_DEBUG("fencei [no-op]\n");
 }
 
 //jump and link, J-immediate, 
-void jal(State* state, word* instruction) {
+void jal(State * state, word * instruction) {
 	//stores the address of the instruction following the jump (pc+4) into rd
 	//J-immediate encoding
 
 	//signed offset in multiples of 2 bytes
 	sword offset = get_j_imm(*instruction);
-	PRINT_DEBUG("jal x%d,0x%08x\n", GET_RD(*instruction), offset);	
+	PRINT_DEBUG("jal x%d,0x%08x\n", GET_RD(*instruction), offset);
 	//set register if not x0 to the target
-	word destination = state->pc + offset - INSTRUCTION_LENGTH_BYTES; 
+	word destination = state->pc + offset - INSTRUCTION_LENGTH_BYTES;
 	word return_address = state->pc; //next instruction address
 	set_rd_value(state, instruction, return_address);
 	state->pc = destination;
 }
 
 //jump and link register
-void jalr(State* state, word* instruction) {
+void jalr(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("jalr x%d, x%d, 0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), offset);
 	word destination = get_rs1_value(state, instruction) + offset;
@@ -193,7 +197,7 @@ void jalr(State* state, word* instruction) {
 }
 
 //load 8-bit sign-extended value from memory into rd
-void lb(State* state, word* instruction) {
+void lb(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lb x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -202,7 +206,7 @@ void lb(State* state, word* instruction) {
 }
 
 //load 8-bit zero-extended value from memory into rd
-void lbu(State* state, word* instruction) {
+void lbu(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lbu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -211,7 +215,7 @@ void lbu(State* state, word* instruction) {
 }
 
 //load 16-bit sign-extended value from memory into rd
-void lh(State* state, word* instruction) {
+void lh(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lh x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -220,7 +224,7 @@ void lh(State* state, word* instruction) {
 }
 
 //load 16-bit zero-extended value from memory into rd
-void lhu(State* state, word* instruction) {
+void lhu(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lhu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -228,7 +232,7 @@ void lhu(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
-void lui(State* state, word* instruction) {
+void lui(State * state, word * instruction) {
 	InstructionU* in = instruction;
 	PRINT_DEBUG("lui x%d,0x%08x\n", GET_RD(*instruction), in->data << 12);
 	word value = in->data << 12;
@@ -236,7 +240,7 @@ void lui(State* state, word* instruction) {
 }
 
 //load 32-bit value from memory into rd
-void lw(State* state, word* instruction) {
+void lw(State * state, word * instruction) {
 	sword offset = get_i_imm(*instruction);
 	PRINT_DEBUG("lw x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
@@ -244,14 +248,14 @@ void lw(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
-void or (State* state, word* instruction) {
+void or (State * state, word * instruction) {
 	PRINT_DEBUG("or x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) | get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
 //bitwise or on rs1 and sign-extended 12-bit immediate
-void ori(State* state, word* instruction) {
+void ori(State * state, word * instruction) {
 	InstructionI* in = instruction;
 	PRINT_DEBUG("ori x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
 	word value = get_rs1_value(state, instruction) | in->imm;
@@ -259,7 +263,7 @@ void ori(State* state, word* instruction) {
 }
 
 //store 8-bit value from the low bits of rs2 to the memory
-void sb(State* state, word* instruction) {
+void sb(State * state, word * instruction) {
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sb x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);
@@ -268,7 +272,7 @@ void sb(State* state, word* instruction) {
 }
 
 //store 16-bit value from the low bits of rs2 to the memory
-void sh(State* state, word* instruction) {
+void sh(State * state, word * instruction) {
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sh x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);
@@ -276,36 +280,36 @@ void sh(State* state, word* instruction) {
 	write_halfword(state, address, value);
 }
 
-void sll(State* state, word* instruction) {
+void sll(State * state, word * instruction) {
 	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
 	word value = get_rs1_value(state, instruction) << shamt;
 	set_rd_value(state, instruction, value);
 }
 
-void slli(State* state, word* instruction) {
+void slli(State * state, word * instruction) {
 	InstructionIShift* in = instruction;
 	PRINT_DEBUG("slli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
 	word value = get_reg(state, GET_RS1(*instruction)) << in->shamt;
 	set_reg(state, GET_RD(*instruction), value);
 }
 
-void slt(State* state, word* instruction) {
+void slt(State * state, word * instruction) {
 	//signed comparison, if rs1 < rs2 then rd=1 else rd=0
 	PRINT_DEBUG("slt x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-	word value = (sword)get_rs1_value(state, instruction) < (sword)get_rs2_value(state, instruction) ? 1 : 0; 
+	word value = (sword)get_rs1_value(state, instruction) < (sword)get_rs2_value(state, instruction) ? 1 : 0;
 	set_rd_value(state, instruction, value);
 }
 
-void sltu(State* state, word* instruction) {
+void sltu(State * state, word * instruction) {
 	//unsigned comparison, if rs1 < rs2 then rd=1 else rd=0
 	PRINT_DEBUG("sltu x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-	word value = get_rs1_value(state, instruction) < get_rs2_value(state, instruction) ? 1 : 0; 
+	word value = get_rs1_value(state, instruction) < get_rs2_value(state, instruction) ? 1 : 0;
 	set_rd_value(state, instruction, value);
 }
 
 //set less than immediate
-void slti(State* state, word* instruction) {
+void slti(State * state, word * instruction) {
 	//places the value 1 in register rd if register rs1 is less than the sign - extended immediate when both are treated as signed numbers, else 0 is written to rd
 	InstructionI* in = instruction;
 	PRINT_DEBUG("slti x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
@@ -314,7 +318,7 @@ void slti(State* state, word* instruction) {
 }
 
 //set less than immediate unsigned
-void sltiu(State* state, word* instruction) {
+void sltiu(State * state, word * instruction) {
 	//places the value 1 in register rd if register rs1 is less than the sign - extended immediate when both are treated as signed numbers, else 0 is written to rd
 	InstructionI* in = instruction;
 	PRINT_DEBUG("sltiu x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
@@ -323,43 +327,43 @@ void sltiu(State* state, word* instruction) {
 }
 
 //shift right arithmetic
-void sra(State* state, word* instruction) {
+void sra(State * state, word * instruction) {
 	PRINT_DEBUG("sra x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
 	word value = (sword)get_rs1_value(state, instruction) >> shamt;
 	set_rd_value(state, instruction, value);
 }
 
-void srai(State* state, word* instruction) {
+void srai(State * state, word * instruction) {
 	InstructionIShift* in = instruction;
 	PRINT_DEBUG("srai x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
-	word value = (sword)get_rs1_value(state,instruction) >> in->shamt;
+	word value = (sword)get_rs1_value(state, instruction) >> in->shamt;
 	set_rd_value(state, instruction, value);
 }
 
 //shift right logical
-void srl(State* state, word* instruction) {
+void srl(State * state, word * instruction) {
 	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
 	word value = get_rs1_value(state, instruction) >> shamt;
 	set_rd_value(state, instruction, value);
 }
 
-void srli(State* state, word* instruction) {
+void srli(State * state, word * instruction) {
 	InstructionIShift* in = instruction;
 	PRINT_DEBUG("srli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
 	word value = get_rs1_value(state, instruction) >> in->shamt;
 	set_rd_value(state, instruction, value);
 }
 
-void sub(State* state, word* instruction) {
+void sub(State * state, word * instruction) {
 	PRINT_DEBUG("sub x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) - get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
 //store 32-bit value from rs to memory
-void sw(State* state, word* instruction) {
+void sw(State * state, word * instruction) {
 	sword offset = get_s_imm(*instruction);
 	PRINT_DEBUG("sw x%d,%d(x%d)\n", GET_RS2(*instruction), offset, GET_RS1(*instruction));
 	word value = get_rs2_value(state, instruction);
@@ -367,22 +371,168 @@ void sw(State* state, word* instruction) {
 	write_word(state, address, value);
 }
 
-void xor (State* state, word* instruction) {
+void /**/xor (State * state, word * instruction) {
 	PRINT_DEBUG("xor x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	word value = get_rs1_value(state, instruction) ^ get_rs2_value(state, instruction);
 	set_rd_value(state, instruction, value);
 }
 
 //bitwise xor on rs1 and sign-extended 12-bit immediate
-void xori(State* state, word* instruction) {
+void xori(State * state, word * instruction) {
 	InstructionI* in = instruction;
 	PRINT_DEBUG("xori x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
 	word value = get_rs1_value(state, instruction) ^ in->imm;
 	set_rd_value(state, instruction, value);
 }
 
-void emulate_op(State* state) {
+//atomic read & set bits in CSR
+void csrrs(State * state, word * instruction) {
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrs x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
+	//read old value of CSR, zero-extend to XLEN bits, write to rd
+	set_rd_value(state, instruction, state->csr[csr]);
+
+	//switch (csr) {
+	//case 0xf14: //mhardid
+	//	set_rd_value(state, instruction, state->mhartid);
+	//	break;
+	//}
+	//any bit that is high in rs1 will cause the correspoding bit to be set in CSR
+	word value = get_rs1_value(state, instruction);
+	word csr_value = state->csr[csr] | value;
+	state->csr[csr] = csr_value;
+
+
+}
+
+//atomic read/write CSR
+void csrrw(State * state, word * instruction) {
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrw x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
+
+	//do not read CSR if rd is x0
+	if (GET_RD(*instruction) != 0)
+	{
+		//read old value of CSR, zero-extend to XLEN bits, write to rd
+		word value = state->csr[csr];
+		//these following two sets are atomic
+		set_rd_value(state, instruction, value);
+	}
+	//write rs1 to csr
+	state->csr[csr] = get_rs1_value(state, instruction);
+}
+
+//atomic read & clear bits in CSR
+void csrrc(State * state, word * instruction) {
+	//read old value of CSR, zero-extend to XLEN bits, write to rd
+	//read value from rs1, use as bit mask to clear bits in CSR
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrc x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
+	//do not read CSR if rd is x0
+	if (GET_RD(*instruction) != 0)
+	{
+		set_rd_value(state, instruction, state->csr[csr]);
+	}
+	//any bit that is high in rs1 will cause the correspoding bit to be cleared in CSR
+	word value = get_rs1_value(state, instruction);
+	word csr_value = state->csr[csr] & ~value;
+	state->csr[csr] = csr_value;
+}
+
+//instead of rs1 use a zero-extended 5-bit unsigned immediate
+void csrrwi(State * state, word * instruction) {
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrwi x%d,0x%x,0x%08x\n", GET_RD(*instruction), GET_CSR_IMM(*instruction), csr);
+	//TODO nice implementation
+	//do not read CSR if rd is x0
+	if (GET_RD(*instruction) != 0)
+	{
+		set_rd_value(state, instruction, state->csr[csr]);
+	}
+	//any bit that is high in rs1 will cause the correspoding bit to be cleared in CSR
+	word value = GET_CSR_IMM(*instruction);
+	word csr_value = state->csr[csr] & ~value;
+	state->csr[csr] = csr_value;
+}
+
+void csrrsi(State * state, word * instruction) {
+	//TODO verify implementation
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrsi x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_CSR_IMM(*instruction), csr);
+	//read old value of CSR, zero-extend to XLEN bits, write to rd
+	set_rd_value(state, instruction, state->csr[csr]);
+
+	//switch (csr) {
+	//case 0xf14: //mhardid
+	//	set_rd_value(state, instruction, state->mhartid);
+	//	break;
+	//}
+	//any bit that is high in rs1 will cause the correspoding bit to be set in CSR
+	word value = GET_CSR_IMM(*instruction);// get_rs1_value(state, instruction);
+
+	//if the immediate value is zero, then do not write to CSR
+	if (value != 0) {
+
+		word csr_value = state->csr[csr] | value;
+		state->csr[csr] = csr_value;
+	}
+}
+
+void csrrci(State * state, word * instruction) {
+	//TODO nicer implementation
+	//read old value of CSR, zero-extend to XLEN bits, write to rd
+	//read value from rs1, use as bit mask to clear bits in CSR
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrci x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_CSR_IMM(*instruction), csr);
+	//do not read CSR if rd is x0
+	if (GET_RD(*instruction) != 0)
+	{
+		set_rd_value(state, instruction, state->csr[csr]);
+	}
+	//any bit that is high in rs1 will cause the correspoding bit to be cleared in CSR
+	//if the immediate value is zero, then do not write to CSR
+	word value = GET_CSR_IMM(*instruction);
+	if (value != 0) {
+		word csr_value = state->csr[csr] & ~value;
+		state->csr[csr] = csr_value;
+	}
+}
+
+//privileged
+//wait for interrupt
+void wfi(State * state, word * instruction) {
+	//wait for interrupt
+	PRINT_DEBUG("wfi\n");
+	//no-op
+}
+
+//privileged
+//return from m-mode trap
+void mret(State * state, word * instruction) {
+	//wait for interrupt
+	PRINT_DEBUG("mret\n");
+	//no-op
+}
+
+//privileged
+//return from supervisor-mode trap
+void sret(State * state, word * instruction) {
+	//wait for interrupt
+	PRINT_DEBUG("sret\n");
+	//no-op
+}
+
+//privileged
+//return from user-mode trap
+void uret(State * state, word * instruction) {
+	//wait for interrupt
+	PRINT_DEBUG("uret\n");
+	//no-op
+}
+
+void emulate_op(State * state) {
 	word* instruction = fetch_next_word(state);
+
 	//state->pc += INSTRUCTION_LENGTH_BYTES;
 	if ((*instruction & MASK_ADD) == MATCH_ADD) {
 		add(state, instruction);
@@ -510,8 +660,39 @@ void emulate_op(State* state) {
 	else if ((*instruction & MASK_XORI) == MATCH_XORI) {
 		xori(state, instruction);
 	}
+	else if ((*instruction & MASK_CSRRS) == MATCH_CSRRS) {
+		csrrs(state, instruction);
+	}
+	else if ((*instruction & MASK_CSRRW) == MATCH_CSRRW) {
+		csrrw(state, instruction);
+	}
+	else if ((*instruction & MASK_CSRRC) == MATCH_CSRRC) {
+		csrrs(state, instruction);
+	}
+	else if ((*instruction & MASK_CSRRSI) == MATCH_CSRRSI) {
+		csrrsi(state, instruction);
+	}
+	else if ((*instruction & MASK_CSRRWI) == MATCH_CSRRWI) {
+		csrrwi(state, instruction);
+	}
+	else if ((*instruction & MASK_CSRRCI) == MATCH_CSRRCI) {
+		csrrci(state, instruction);
+	}
+	else if ((*instruction & MASK_WFI) == MATCH_WFI) {
+		wfi(state, instruction);
+	}
+	else if ((*instruction & MASK_MRET) == MATCH_MRET) {
+		mret(state, instruction);
+	}
+	else if ((*instruction & MASK_SRET) == MATCH_SRET) {
+		sret(state, instruction);
+	}
+	else if ((*instruction & MASK_URET) == MATCH_URET) {
+		uret(state, instruction);
+	}
 	else {
 		printf("Unknown instruction: %8X ", *instruction);
 		return;
 	}
+	state->instruction_counter++;
 }
