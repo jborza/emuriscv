@@ -29,6 +29,7 @@ void clear_state(State* state) {
 	state->status = RUNNING;
 	//clear the memory
 	const int memory_size = 1024 * 1024;
+
 	state->memory = malloc(memory_size);
 	memset(state->memory, 0, sizeof(byte) * memory_size);
 	set_last_exit_code(0);

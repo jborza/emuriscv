@@ -7,6 +7,7 @@
 #include "vm.h"
 #include "fdt.h"
 #include "debug_symbols.h"
+#include "support_io.h"
 
 const int ram_size = 16 * 1024 * 1024;
 State state;
@@ -19,7 +20,7 @@ State state;
 #define CONSOLE_PUTINT32 3
 #define CONSOLE_PUTSTRING 4
 
-//#define BUILD_REAL_FDT
+#define BUILD_REAL_FDT
 
 //    /* HTIF */
 static uint32_t htif_read(void* opaque, uint32_t offset,
@@ -38,27 +39,6 @@ void clear_state_linux(State* state) {
 	state->pc = 0;
 	state->status = RUNNING;
 	state->instruction_counter = 0;
-	//clear the memory
-	//const int memory_size = 1024 * 1024;
-	//state->memory = malloc(ram_size);
-	//memset(state->memory, 0, sizeof(byte) * ram_size);
-}
-
-byte* read_bin(char* name, int* bin_file_size) {
-	FILE* file = fopen(name, "rb");
-	if (!file) {
-		printf("Couldn't load test bin file '%s'!", name);
-		exit(1);
-		return NULL;
-	}
-	fseek(file, 0, SEEK_END);
-	*bin_file_size = ftell(file);
-
-	rewind(file);
-	byte* buffer = malloc(*bin_file_size);
-	size_t read = fread(buffer, sizeof(byte), *bin_file_size, file);
-	fclose(file);
-	return buffer;
 }
 
 void linux_ecall_callback(State * state) {
@@ -83,69 +63,6 @@ void linux_ecall_callback(State * state) {
 	}
 }
 
-#define vm_error(...) printf(__VA_ARGS__)
-
-MemoryRange* register_ram_entry(MemoryMap * map, uint32_t base_addr, uint32_t size) {
-	MemoryRange* pr;
-	if (map->n_phys_mem_range + 1 > PHYS_MEM_RANGE_MAX)
-	{
-		fprintf(stderr, "Maximum amount of memory ranges exceeded\n");
-		exit(1);
-	}
-	pr = &(map->phys_mem_range[map->n_phys_mem_range++]); 
-	pr->map = map;
-	pr->size = size;
-	pr->address = base_addr;
-	pr->is_ram = 1;
-	return pr;
-}
-
-MemoryRange* cpu_register_ram(MemoryMap * map, uint32_t base_addr, uint32_t size) {
-	//register the range
-	MemoryRange* range = register_ram_entry(map, base_addr, size);
-	//allocate new memory for the range
-	range->phys_mem = mallocz(size);
-	if (!range->phys_mem) {
-		fprintf(stderr, "Could not allocate VM memory\n");
-		exit(1);
-	}
-	return range;
-}
-
-typedef void DeviceWriteFunc(void* opaque, uint32_t offset,
-	uint32_t val, int size_log2);
-typedef uint32_t DeviceReadFunc(void* opaque, uint32_t offset, int size_log2);
-
-//	cpu_register_device(vm->mem_map, addr:HTIF_BASE_ADDR, size: 16, opaque: vm, read: htif_read, write: htif_write, flags: DEVIO_SIZE32);
-
-MemoryRange* cpu_register_device(MemoryMap* s, uint64_t addr,
-	uint64_t size, void* opaque,
-	DeviceReadFunc* read_func, DeviceWriteFunc* write_func,
-	int devio_flags)
-{
-	MemoryRange* pr;
-	pr = &s->phys_mem_range[s->n_phys_mem_range++];
-	pr->map = s;
-	pr->address = addr;
-	//pr->org_size = size;
-	//if (devio_flags & DEVIO_DISABLED)
-	//	pr->size = 0;
-	//else
-	pr->size = size;// pr->org_size;
-	pr->is_ram = 0;
-	pr->opaque = opaque;
-	pr->read_func = read_func;
-	pr->write_func = write_func;
-	//pr->devio_flags = devio_flags;
-	return pr;
-}
-
-MemoryMap* phys_mem_map_init() {
-	MemoryMap* s;
-	s = mallocz(sizeof(*s));
-	return s;
-}
-
 RiscVMachine* initialize_riscv_machine() {
 	//TODO clean up
 	RiscVMachine* vm;
@@ -161,7 +78,6 @@ RiscVMachine* initialize_riscv_machine() {
 	cpu_register_ram(vm->mem_map, 0x00000000, LOW_RAM_SIZE);
 
 #define DEVIO_SIZE32 4
-
 
 	cpu_register_device(vm->mem_map, HTIF_BASE_ADDR, 16,
 		vm, htif_read, htif_write, DEVIO_SIZE32);
@@ -199,7 +115,7 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 	uint8_t* buf = read_bin("linux/bbl32.bin", &buf_len);
 
 	if (buf_len > vm->ram_size) {
-		vm_error("BIOS too big\n");
+		fprintf(stderr, "BIOS too big\n");
 		exit(1);
 	}
 

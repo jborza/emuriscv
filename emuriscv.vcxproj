@@ -154,6 +154,8 @@
     <ClCompile Include="decode.c" />
     <ClCompile Include="cpu_ecall.c" />
     <ClCompile Include="fdt.c" />
+    <ClCompile Include="memory_map.c" />
+    <ClCompile Include="support_io.c" />
     <ClCompile Include="test.c" />
     <ClCompile Include="memory.c" />
     <ClCompile Include="run_linux.c" />
