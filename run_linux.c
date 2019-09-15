@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "config.h"
 #include "cpu.h"
 #include <memory.h>
 #include "test.h"
@@ -9,7 +10,7 @@
 #include "debug_symbols.h"
 #include "support_io.h"
 
-const int ram_size = 16 * 1024 * 1024;
+const int ram_size = VM_MEMORY_SIZE;
 State state;
 
 #define SYSCALL_REG 17
@@ -19,8 +20,6 @@ State state;
 #define CONSOLE_PUTINT16 2
 #define CONSOLE_PUTINT32 3
 #define CONSOLE_PUTSTRING 4
-
-#define BUILD_REAL_FDT
 
 //    /* HTIF */
 static uint32_t htif_read(void* opaque, uint32_t offset,
@@ -102,7 +101,7 @@ uint8_t* phys_mem_get_ram_ptr(MemoryMap* map, uint32_t paddr/*, BOOL is_rw*/) {
 	if (!pr)
 		return NULL;
 	offset = paddr - pr->address;
-	return pr->phys_mem + (uintptr_t)offset;
+	return pr->phys_mem_ptr + (uintptr_t)offset;
 }
 
 static uint8_t* get_ram_ptr(RiscVMachine* s, uint32_t paddr/*, BOOL is_rw*/)
@@ -281,6 +280,8 @@ void run_linux() {
 	}
 }
 
+#ifdef RUN_LINUX
 int main(int argc, char* argv[]) {
 	run_linux();
 }
+#endif

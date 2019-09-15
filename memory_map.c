@@ -43,8 +43,8 @@ MemoryRange* cpu_register_ram(MemoryMap* map, uint32_t base_addr, uint32_t size)
 	//register the range
 	MemoryRange* range = register_ram_entry(map, base_addr, size);
 	//allocate new memory for the range
-	range->phys_mem = mallocz(size);
-	if (!range->phys_mem) {
+	range->phys_mem_ptr = mallocz(size);
+	if (!range->phys_mem_ptr) {
 		fprintf(stderr, "Could not allocate VM memory\n");
 		exit(1);
 	}

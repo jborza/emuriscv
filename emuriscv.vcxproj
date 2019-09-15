@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpu_csr.h" />
     <ClInclude Include="debug.h" />
