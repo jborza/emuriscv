@@ -1,7 +1,9 @@
 #pragma once
 #include "state.h"
 
-
+#define SIZE_BYTE 0
+#define SIZE_HALF 1
+#define SIZE_WORD 2
 
 word* fetch_next_word(State* state);
 
