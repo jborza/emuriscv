@@ -21,7 +21,11 @@ uint8_t* get_physical_address(State* state, uint32_t address) {
 		printf("get_physical_address: invalid physical address 0x%08x\n", physical_address);
 		return 0;
 	}
+	//if it's not ram, device IO
 	ptr = pr->phys_mem + (uint32_t)(physical_address - pr->address);
+	if (!pr->is_ram) {
+		printf("access to a non-ram range!\n");
+	}
 	return ptr;
 }
 

@@ -504,6 +504,8 @@ void wfi(State * state, word * instruction) {
 	//wait for interrupt
 	PRINT_DEBUG("wfi\n");
 	//no-op
+
+	exit(1);
 }
 
 //privileged

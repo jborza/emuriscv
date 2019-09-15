@@ -1,5 +1,5 @@
 #pragma once
-#ifdef _DEBUG
+#ifdef _DEBUG_
 #include <stdio.h>
 #define PRINT_DEBUG(...) printf(__VA_ARGS__)
 #else

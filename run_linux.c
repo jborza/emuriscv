@@ -5,9 +5,27 @@
 #include "decode.h"
 #include "memory.h"
 #include "vm.h"
+#include "fdt.h"
+#include "debug_symbols.h"
 
 const int ram_size = 16 * 1024 * 1024;
 State state;
+
+#define SYSCALL_REG 17
+#define EXIT 93
+#define SYSCALL_ARG0 10
+#define CONSOLE_PUTCHAR 1
+#define CONSOLE_PUTINT16 2
+#define CONSOLE_PUTINT32 3
+#define CONSOLE_PUTSTRING 4
+
+//#define BUILD_REAL_FDT
+
+//    /* HTIF */
+static uint32_t htif_read(void* opaque, uint32_t offset,
+	int size_log2);
+static void htif_write(void* opaque, uint32_t offset, uint32_t val,
+	int size_log2);
 
 void clear_state_linux(State* state) {
 	//TODO would be better to initialize with mallocz
@@ -45,7 +63,24 @@ byte* read_bin(char* name, int* bin_file_size) {
 
 void linux_ecall_callback(State * state) {
 	//TODO implement
-	printf("!! TODO !! ecall_callback\n");
+	if (state->x[SYSCALL_REG] == CONSOLE_PUTCHAR) {
+		char c = (char)state->x[SYSCALL_ARG0];
+		fprintf(stderr, "%c", c);
+	}
+	else if (state->x[SYSCALL_REG] == CONSOLE_PUTINT16) {
+		int value = state->x[SYSCALL_ARG0];
+		fprintf(stderr, "%d", value);
+	}
+	else if (state->x[SYSCALL_REG] == CONSOLE_PUTINT32) {
+		int value = state->x[SYSCALL_ARG0];
+		fprintf(stderr, "%d", value);
+	}
+	else if (state->x[SYSCALL_REG] == CONSOLE_PUTSTRING) {
+	int value = state->x[SYSCALL_ARG0];
+		//note: translate address
+		word* address = get_physical_address(state, value);
+		fprintf(stderr, "%s", address);
+	}
 }
 
 #define vm_error(...) printf(__VA_ARGS__)
@@ -61,6 +96,7 @@ MemoryRange* register_ram_entry(MemoryMap * map, uint32_t base_addr, uint32_t si
 	pr->map = map;
 	pr->size = size;
 	pr->address = base_addr;
+	pr->is_ram = 1;
 	return pr;
 }
 
@@ -74,6 +110,34 @@ MemoryRange* cpu_register_ram(MemoryMap * map, uint32_t base_addr, uint32_t size
 		exit(1);
 	}
 	return range;
+}
+
+typedef void DeviceWriteFunc(void* opaque, uint32_t offset,
+	uint32_t val, int size_log2);
+typedef uint32_t DeviceReadFunc(void* opaque, uint32_t offset, int size_log2);
+
+//	cpu_register_device(vm->mem_map, addr:HTIF_BASE_ADDR, size: 16, opaque: vm, read: htif_read, write: htif_write, flags: DEVIO_SIZE32);
+
+MemoryRange* cpu_register_device(MemoryMap* s, uint64_t addr,
+	uint64_t size, void* opaque,
+	DeviceReadFunc* read_func, DeviceWriteFunc* write_func,
+	int devio_flags)
+{
+	MemoryRange* pr;
+	pr = &s->phys_mem_range[s->n_phys_mem_range++];
+	pr->map = s;
+	pr->address = addr;
+	//pr->org_size = size;
+	//if (devio_flags & DEVIO_DISABLED)
+	//	pr->size = 0;
+	//else
+	pr->size = size;// pr->org_size;
+	pr->is_ram = 0;
+	pr->opaque = opaque;
+	pr->read_func = read_func;
+	pr->write_func = write_func;
+	//pr->devio_flags = devio_flags;
+	return pr;
 }
 
 MemoryMap* phys_mem_map_init() {
@@ -95,6 +159,12 @@ RiscVMachine* initialize_riscv_machine() {
 
 	cpu_register_ram(vm->mem_map, RAM_BASE_ADDR, ram_size);
 	cpu_register_ram(vm->mem_map, 0x00000000, LOW_RAM_SIZE);
+
+#define DEVIO_SIZE32 4
+
+
+	cpu_register_device(vm->mem_map, HTIF_BASE_ADDR, 16,
+		vm, htif_read, htif_write, DEVIO_SIZE32);
 
 	return vm;
 }
@@ -141,7 +211,18 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 	//TODO load flattened device tree
 	ram_ptr = get_ram_ptr(vm, 0);
 	uint32_t fdt_addr = 0x1000 + 8 * 8;
+	uint32_t kernel_base = 0;
+	uint32_t kernel_buf_len = 0;
 
+	char* cmd_line = "console=htifcon0";
+
+#ifdef BUILD_REAL_FDT
+	riscv_build_fdt(vm, ram_ptr + fdt_addr,
+		RAM_BASE_ADDR + kernel_base,
+		kernel_buf_len, cmd_line);
+#else
+	riscv_load_fdt("linux/spike_dts.bin", ram_ptr+fdt_addr);
+#endif
 	uint32_t jump_addr = 0x80000000;
 
 	//set up BBL for loading
@@ -154,7 +235,111 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 	q[4] = 0x00028067; /* jalr zero, t0, jump_addr */
 }
 
+
+symbol* add_symbol(symbol *tail, int offset, char* name) {
+	symbol* current = mallocz(sizeof(symbol));
+	current->offset = offset;
+	current->name = name;
+	if (tail != NULL)
+		tail->next = current;
+	return current;
+}
+
+
+symbol* get_symbol(symbol *symbol_head, word address) {
+	symbol* current = symbol_head;
+	symbol* candidate = current;
+	while (current->offset <= address && current->next != NULL) {
+		candidate = current;
+		current = current->next;
+	}
+	return candidate;
+}
+
+void console_write(const uint8_t* buf, int len) {
+	fprintf(stderr, "%s", buf);
+}
+
+static uint32_t htif_read(void* opaque, uint32_t offset,
+	int size_log2)
+{
+	RiscVMachine* s = opaque;
+	uint32_t val;
+
+	switch (offset) {
+	case 0:
+		val = s->htif_tohost;
+		break;
+	case 4:
+		val = s->htif_tohost >> 32;
+		break;
+	case 8:
+		val = s->htif_fromhost;
+		break;
+	case 12:
+		val = s->htif_fromhost >> 32;
+		break;
+	default:
+		val = 0;
+		break;
+	}
+	return val;
+}
+
+static void htif_handle_cmd(RiscVMachine* s)
+{
+	uint32_t device, cmd;
+
+	device = s->htif_tohost >> 56;
+	cmd = (s->htif_tohost >> 48) & 0xff;
+	if (s->htif_tohost == 1) {
+		/* shuthost */
+		printf("\nPower off.\n");
+		exit(0);
+	}
+	else if (device == 1 && cmd == 1) {
+		uint8_t buf[1];
+		buf[0] = s->htif_tohost & 0xff;
+		console_write(buf, 1);
+		s->htif_tohost = 0;
+		s->htif_fromhost = ((uint64_t)device << 56) | ((uint64_t)cmd << 48);
+	}
+	else if (device == 1 && cmd == 0) {
+		/* request keyboard interrupt */
+		s->htif_tohost = 0;
+	}
+	else {
+		printf("HTIF: unsupported tohost=0x%016x\n", s->htif_tohost);
+	}
+}
+
+static void htif_write(void* opaque, uint32_t offset, uint32_t val,
+	int size_log2)
+{
+	RiscVMachine* s = opaque;
+
+	switch (offset) {
+	case 0:
+		s->htif_tohost = (s->htif_tohost & ~0xffffffff) | val;
+		break;
+	case 4:
+		s->htif_tohost = (s->htif_tohost & 0xffffffff) | ((uint64_t)val << 32);
+		htif_handle_cmd(s);
+		break;
+	case 8:
+		s->htif_fromhost = (s->htif_fromhost & ~0xffffffff) | val;
+		break;
+	case 12:
+		s->htif_fromhost = (s->htif_fromhost & 0xffffffff) |
+			(uint64_t)val << 32;
+		break;
+	default:
+		break;
+	}
+}
+
 void run_linux() {
+	initialize_symbols();
 	clear_state_linux(&state);
 	//initialize machine
 	RiscVMachine *vm = initialize_riscv_machine();
@@ -167,10 +352,15 @@ void run_linux() {
 
 	//the initial loader address
 	state.pc = 0x1000;
-
+	symbol* symbol = NULL;
+	int do_output = 0;
 	for (;;) {
 		word* address = get_physical_address(&state, state.pc);
-		printf("%08x:\t%08x\t\t", state.pc, *address);
+		symbol = get_symbol(symbol_list, state.pc);
+		if (do_output) {
+			printf("%08x:  %08x  ", state.pc, *address);
+			printf("%s  ", symbol->name);
+		}
 		emulate_op(&state);
 	}
 }

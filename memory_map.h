@@ -9,6 +9,10 @@ typedef struct MemoryRange {
 	uint32_t address;
 	uint32_t size;
 	uint8_t* phys_mem;
+	void* opaque;
+	void* read_func;
+	void* write_func;
+	int is_ram;
 } MemoryRange;
 
 typedef struct MemoryMap {
