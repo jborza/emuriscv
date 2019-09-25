@@ -6,3 +6,7 @@
 /* "A" Standard Extension for AtomicInstructions, Version 2.0 */
 
 void amoadd_w(State* state, word* instruction);
+void amoand_w(State* state, word* instruction);
+void amoor_w(State* state, word* instruction);
+void amoxor_w(State* state, word* instruction); 
+void amoswap_w(State* state, word* instruction);

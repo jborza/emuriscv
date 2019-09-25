@@ -9,6 +9,7 @@
 #include "cpu_ebreak.h"
 #include "cpu_csr.h"
 #include "cpu_a.h"
+#include "cpu_m.h"
 
 #define INS_MATCH(MASK,MATCH,HANDLER) else if ((*instruction & MASK) == MATCH) { HANDLER(state, instruction);	}
 
@@ -696,8 +697,26 @@ void emulate_op(State * state) {
 	else if ((*instruction & MASK_URET) == MATCH_URET) {
 		uret(state, instruction);
 	}
+#ifdef EXTENSION_A
 	INS_MATCH(MASK_AMOADD_W, MATCH_AMOADD_W, amoadd_w)
+	INS_MATCH(MASK_AMOOR_W, MATCH_AMOOR_W, amoor_w)
+	INS_MATCH(MASK_AMOAND_W, MATCH_AMOAND_W, amoand_w)
+	INS_MATCH(MASK_AMOXOR_W, MATCH_AMOXOR_W, amoxor_w)
+	INS_MATCH(MASK_AMOSWAP_W, MATCH_AMOSWAP_W, amoswap_w)
+#endif
 	INS_MATCH(MASK_SFENCE_VMA, MATCH_SFENCE_VMA, sfence_vma)
+#ifdef EXTENSION_M
+		INS_MATCH(MASK_MUL, MATCH_MUL, mul)
+		INS_MATCH(MASK_MULH, MATCH_MULH, mulh)
+		INS_MATCH(MASK_MULHSU, MATCH_MULHSU, mulhsu)
+		INS_MATCH(MASK_MULHU, MATCH_MULHU, mulhu)
+		INS_MATCH(MASK_DIV, MATCH_DIV, div)
+		INS_MATCH(MASK_DIVU, MATCH_DIVU, divu)
+		INS_MATCH(MASK_REM, MATCH_REM, rem)
+		INS_MATCH(MASK_REMU, MATCH_REMU, remu)
+
+#endif
+
 	/*else if ((*instruction & MASK_AMOADD_W) == MATCH_AMOADD_W) {
 		amoadd_w(state, instruction);
 	}*/

@@ -11,5 +11,6 @@
 //define to allow for 
 #define EXTENSION_A
 #define EXTENSION_ZICSR
+#define EXTENSION_M
 
 extern int print_verbose;

@@ -24,6 +24,8 @@ State state;
 
 int print_verbose = 0;
 
+const uint32_t BOOTLOADER_ADDRESS = 0x1000; 
+
 //    /* HTIF */
 static uint32_t htif_read(void* opaque, uint32_t offset,
 	int size_log2);
@@ -81,6 +83,7 @@ RiscVMachine* initialize_riscv_machine() {
 	vm->mem_map = phys_mem_map_init();
 
 	cpu_register_ram(vm->mem_map, RAM_BASE_ADDR, ram_size);
+	cpu_register_ram(vm->mem_map, 0xc0000000, ram_size);
 	cpu_register_ram(vm->mem_map, 0x00000000, LOW_RAM_SIZE);
 
 #define DEVIO_SIZE32 4
@@ -144,9 +147,14 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 		kernel_base = 0;
 	}
 
+	//HACK load the kernel to 0xc0000000 as well
+	uint8_t* hack_ptr = get_ram_ptr(vm, 0xc0000000);
+	memcpy(hack_ptr, kernel_buf, kernel_buf_len);
+
+
 	//TODO load flattened device tree
 	ram_ptr = get_ram_ptr(vm, 0);
-	uint32_t fdt_addr = 0x1000 + 8 * 8;
+	uint32_t fdt_addr = BOOTLOADER_ADDRESS + 8 * 8;
 
 	char* cmd_line = "console=htifcon0";
 
@@ -161,7 +169,7 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 
 	//set up BBL for loading
 	//boot from 0x1000, then jump to 0x80000000
-	uint32_t * q = (uint32_t*)(ram_ptr + 0x1000);
+	uint32_t * q = (uint32_t*)(ram_ptr + BOOTLOADER_ADDRESS);
 	q[0] = 0x297 + jump_addr - 0x1000; /* auipc t0, jump_addr */
 	q[1] = 0x597; /* auipc a1, dtb */
 	q[2] = 0x58593 + ((fdt_addr - 4) << 20); /* addi a1, a1, dtb */
@@ -343,7 +351,7 @@ void run_linux() {
 	load_bios_and_kernel(vm);
 
 	//the initial loader address
-	state.pc = 0x1000;
+	state.pc = BOOTLOADER_ADDRESS;
 	symbol* symbol = NULL;
 	for (;;) {
 		if (state.pc == 0x80400000) {

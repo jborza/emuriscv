@@ -198,6 +198,7 @@
 #define MASK_REM  0xfe00707f
 #define MATCH_REMU 0x2007033
 #define MASK_REMU  0xfe00707f
+#if RV_64
 #define MATCH_MULW 0x200003b
 #define MASK_MULW  0xfe00707f
 #define MATCH_DIVW 0x200403b
@@ -208,6 +209,7 @@
 #define MASK_REMW  0xfe00707f
 #define MATCH_REMUW 0x200703b
 #define MASK_REMUW  0xfe00707f
+#endif
 #endif
 
 //supervisor memory-management fence
