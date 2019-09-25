@@ -8,11 +8,9 @@
 #include "cpu_ecall.h"
 #include "cpu_ebreak.h"
 #include "cpu_csr.h"
+#include "cpu_a.h"
 
-#define GET_RD(x) ((x >> 7) & 0x1F)
-#define GET_RS1(x) ((x >> 15) & 0x1F)
-#define GET_CSR_IMM(x) ((x >> 15) & 0x1F)
-#define GET_RS2(x) ((x >> 20) & 0x1F)
+#define INS_MATCH(MASK,MATCH,HANDLER) else if ((*instruction & MASK) == MATCH) { HANDLER(state, instruction);	}
 
 int decode_opcode(word* instruction) {
 	//risc opcodes https://klatz.co/blog/riscv-opcodes
@@ -504,6 +502,9 @@ void wfi(State * state, word * instruction) {
 	//wait for interrupt
 	PRINT_DEBUG("wfi\n");
 	//no-op
+	//see how many instructions we did
+	printf("WFI\r\n");
+	printf("executed %d instructions\r\n", state->instruction_counter);
 
 	exit(1);
 }
@@ -511,7 +512,6 @@ void wfi(State * state, word * instruction) {
 //privileged
 //return from m-mode trap
 void mret(State * state, word * instruction) {
-	//wait for interrupt
 	PRINT_DEBUG("mret\n");
 	//no-op
 }
@@ -519,7 +519,6 @@ void mret(State * state, word * instruction) {
 //privileged
 //return from supervisor-mode trap
 void sret(State * state, word * instruction) {
-	//wait for interrupt
 	PRINT_DEBUG("sret\n");
 	//no-op
 }
@@ -527,8 +526,13 @@ void sret(State * state, word * instruction) {
 //privileged
 //return from user-mode trap
 void uret(State * state, word * instruction) {
-	//wait for interrupt
 	PRINT_DEBUG("uret\n");
+	//no-op
+}
+
+void sfence_vma(State* state, word* instruction) {
+	//The supervisor memory - management fence instruction SFENCE.VMA is used to synchronize up - dates to in - memory memory - management data structures with current execution.Instruction exe - cution causes implicit readsand writes to these data structures; however, these implicit referencesare ordinarily not ordered with respect to loadsand stores in the instruction stream.Executingan  SFENCE.VMA  instruction  guarantees  that  any  stores  in  the  instruction  stream  prior  to  theSFENCE.VMA are ordered before all implicit references subsequent to the SFENCE.VMA.
+	PRINT_DEBUG("sfence.vma\r\n");
 	//no-op
 }
 
@@ -692,6 +696,15 @@ void emulate_op(State * state) {
 	else if ((*instruction & MASK_URET) == MATCH_URET) {
 		uret(state, instruction);
 	}
+	INS_MATCH(MASK_AMOADD_W, MATCH_AMOADD_W, amoadd_w)
+	INS_MATCH(MASK_SFENCE_VMA, MATCH_SFENCE_VMA, sfence_vma)
+	/*else if ((*instruction & MASK_AMOADD_W) == MATCH_AMOADD_W) {
+		amoadd_w(state, instruction);
+	}*/
+	//else if ((*instruction & MASK_SFENCE_VMA) == MATCH_SFENCE_VMA) {
+	//	sfence_vma(state, instruction);
+	//	//no-op in this emulator
+	//}
 	else {
 		printf("Unknown instruction: %8X ", *instruction);
 		return;

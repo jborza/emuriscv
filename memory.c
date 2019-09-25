@@ -76,7 +76,7 @@ void write_common(State * state, word address, word value, int size_log2) {
 	}
 	else {
 		//device I/O
-		target.range->write_func(target.range->opaque, target.ptr, value, size_log2);
+ 		target.range->write_func(target.range->opaque, target.ptr, value, size_log2);
 	}
 }
 

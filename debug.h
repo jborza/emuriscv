@@ -3,7 +3,8 @@
 
 #ifdef PRINT_OPCODES
 #include <stdio.h>
-#define PRINT_DEBUG(...) printf(__VA_ARGS__)
+void print_debug(const char* s, ...);
+#define PRINT_DEBUG(...) print_debug(__VA_ARGS__)
 #else
 #define PRINT_DEBUG(...) // no-op
 #endif

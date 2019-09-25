@@ -448,14 +448,14 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 
 	//fdt_end_node(s); /* soc */
 
-	//fdt_begin_node(s, "chosen");
-	//fdt_prop_str(s, "bootargs", cmd_line ? cmd_line : "");
-	//if (kernel_size > 0) {
-	//	fdt_prop_tab_u64(s, "riscv,kernel-start", kernel_start);
-	//	fdt_prop_tab_u64(s, "riscv,kernel-end", kernel_start + kernel_size);
-	//}
+	fdt_begin_node(s, "chosen");
+	fdt_prop_str(s, "bootargs", cmd_line ? cmd_line : "");
+	if (kernel_size > 0) {
+		fdt_prop_tab_u64(s, "riscv,kernel-start", kernel_start);
+		fdt_prop_tab_u64(s, "riscv,kernel-end", kernel_start + kernel_size);
+	}
 
-	//fdt_end_node(s); /* chosen */
+	fdt_end_node(s); /* chosen */
 
 	fdt_end_node(s); /* / */
 

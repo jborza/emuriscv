@@ -9,6 +9,7 @@
 #include "fdt.h"
 #include "debug_symbols.h"
 #include "support_io.h"
+#include <time.h>
 
 const int ram_size = VM_MEMORY_SIZE;
 State state;
@@ -21,11 +22,16 @@ State state;
 #define CONSOLE_PUTINT32 3
 #define CONSOLE_PUTSTRING 4
 
+int print_verbose = 0;
+
 //    /* HTIF */
 static uint32_t htif_read(void* opaque, uint32_t offset,
 	int size_log2);
 static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 	int size_log2);
+
+static uint32_t clint_read(void* opaque, uint32_t offset, int size_log2);
+static void clint_write(void* opaque, uint32_t offset, uint32_t val, int size_log2);
 
 void clear_state_linux(State* state) {
 	//TODO would be better to initialize with mallocz
@@ -41,6 +47,7 @@ void clear_state_linux(State* state) {
 }
 
 void linux_ecall_callback(State * state) {
+	return;
 	//TODO implement
 	if (state->x[SYSCALL_REG] == CONSOLE_PUTCHAR) {
 		char c = (char)state->x[SYSCALL_ARG0];
@@ -55,7 +62,7 @@ void linux_ecall_callback(State * state) {
 		fprintf(stderr, "%d", value);
 	}
 	else if (state->x[SYSCALL_REG] == CONSOLE_PUTSTRING) {
-	int value = state->x[SYSCALL_ARG0];
+		int value = state->x[SYSCALL_ARG0];
 		//note: translate address
 		word* address = get_physical_address(state, value);
 		fprintf(stderr, "%s", address);
@@ -78,13 +85,16 @@ RiscVMachine* initialize_riscv_machine() {
 
 #define DEVIO_SIZE32 4
 
-	cpu_register_device(vm->mem_map, HTIF_BASE_ADDR, 16,
+	cpu_register_device(vm->mem_map, HTIF_BASE_ADDR, HTIF_SIZE,
 		vm, htif_read, htif_write, DEVIO_SIZE32);
+
+	cpu_register_device(vm->mem_map, CLINT_BASE_ADDR, CLINT_SIZE,
+		vm, clint_read, clint_write, DEVIO_SIZE32);
 
 	return vm;
 }
 
-MemoryRange* get_phys_mem_range(MemoryMap* map, uint32_t paddr) {
+MemoryRange* get_phys_mem_range(MemoryMap * map, uint32_t paddr) {
 	MemoryRange* range;
 	for (int i = 0; i < map->n_phys_mem_range; i++)
 	{
@@ -95,7 +105,7 @@ MemoryRange* get_phys_mem_range(MemoryMap* map, uint32_t paddr) {
 	return NULL;
 }
 
-uint8_t* phys_mem_get_ram_ptr(MemoryMap* map, uint32_t paddr/*, BOOL is_rw*/) {
+uint8_t* phys_mem_get_ram_ptr(MemoryMap * map, uint32_t paddr/*, BOOL is_rw*/) {
 	MemoryRange* pr = get_phys_mem_range(map, paddr);
 	uintptr_t offset;
 	if (!pr)
@@ -104,13 +114,14 @@ uint8_t* phys_mem_get_ram_ptr(MemoryMap* map, uint32_t paddr/*, BOOL is_rw*/) {
 	return pr->phys_mem_ptr + (uintptr_t)offset;
 }
 
-static uint8_t* get_ram_ptr(RiscVMachine* s, uint32_t paddr/*, BOOL is_rw*/)
+static uint8_t* get_ram_ptr(RiscVMachine * s, uint32_t paddr/*, BOOL is_rw*/)
 {
 	return phys_mem_get_ram_ptr(s->mem_map, paddr);
 }
 
-void load_bios_and_kernel(RiscVMachine *vm) {
-	int buf_len;
+void load_bios_and_kernel(RiscVMachine * vm) {
+	int buf_len, kernel_buf_len;
+	uint32_t kernel_align, kernel_base;
 	uint8_t* buf = read_bin("linux/bbl32.bin", &buf_len);
 
 	if (buf_len > vm->ram_size) {
@@ -122,12 +133,20 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 	memcpy(ram_ptr, buf, buf_len);
 
 	//TODO load kernel
+	uint8_t* kernel_buf = read_bin("linux/vmlinux-smalldebug-rv32ia.bin", &kernel_buf_len);
+	if(kernel_buf_len > 0) {
+		/* copy the kernel if present */
+			kernel_align = 4 << 20; /* 4 MB page align */
+		kernel_base = (buf_len + kernel_align - 1) & ~(kernel_align - 1);
+		memcpy(ram_ptr + kernel_base, kernel_buf, kernel_buf_len);
+	}
+	else {
+		kernel_base = 0;
+	}
 
 	//TODO load flattened device tree
 	ram_ptr = get_ram_ptr(vm, 0);
 	uint32_t fdt_addr = 0x1000 + 8 * 8;
-	uint32_t kernel_base = 0;
-	uint32_t kernel_buf_len = 0;
 
 	char* cmd_line = "console=htifcon0";
 
@@ -136,13 +155,13 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 		RAM_BASE_ADDR + kernel_base,
 		kernel_buf_len, cmd_line);
 #else
-	riscv_load_fdt("linux/spike_dts.bin", ram_ptr+fdt_addr);
+	riscv_load_fdt("linux/spike_dts.bin", ram_ptr + fdt_addr);
 #endif
 	uint32_t jump_addr = 0x80000000;
 
 	//set up BBL for loading
 	//boot from 0x1000, then jump to 0x80000000
-	uint32_t* q = (uint32_t*)(ram_ptr + 0x1000);
+	uint32_t * q = (uint32_t*)(ram_ptr + 0x1000);
 	q[0] = 0x297 + jump_addr - 0x1000; /* auipc t0, jump_addr */
 	q[1] = 0x597; /* auipc a1, dtb */
 	q[2] = 0x58593 + ((fdt_addr - 4) << 20); /* addi a1, a1, dtb */
@@ -151,7 +170,7 @@ void load_bios_and_kernel(RiscVMachine *vm) {
 }
 
 
-symbol* add_symbol(symbol *tail, int offset, char* name) {
+symbol * add_symbol(symbol * tail, word offset, char* name) {
 	symbol* current = mallocz(sizeof(symbol));
 	current->offset = offset;
 	current->name = name;
@@ -161,7 +180,7 @@ symbol* add_symbol(symbol *tail, int offset, char* name) {
 }
 
 
-symbol* get_symbol(symbol *symbol_head, word address) {
+symbol* get_symbol(symbol * symbol_head, word address) {
 	symbol* current = symbol_head;
 	symbol* candidate = current;
 	while (current->offset <= address && current->next != NULL) {
@@ -171,8 +190,8 @@ symbol* get_symbol(symbol *symbol_head, word address) {
 	return candidate;
 }
 
-void console_write(const uint8_t* buf, int len) {
-	fprintf(stderr, "%s", buf);
+void console_write(const uint8_t * buf, int len) {
+	fprintf(stderr, "%c", *buf);
 }
 
 static uint32_t htif_read(void* opaque, uint32_t offset,
@@ -201,7 +220,7 @@ static uint32_t htif_read(void* opaque, uint32_t offset,
 	return val;
 }
 
-static void htif_handle_cmd(RiscVMachine* s)
+static void htif_handle_cmd(RiscVMachine * s)
 {
 	uint32_t device, cmd;
 
@@ -225,6 +244,62 @@ static void htif_handle_cmd(RiscVMachine* s)
 	}
 	else {
 		printf("HTIF: unsupported tohost=0x%016x\n", s->htif_tohost);
+	}
+}
+
+static uint64_t rtc_get_time(RiscVMachine * vm)
+{
+	uint64_t val;
+	//fake clock based on instructions emulated
+	val = vm->cycles;
+	return val;
+}
+
+static uint32_t clint_read(void* opaque, uint32_t offset, int size_log2)
+{
+	RiscVMachine* vm = opaque;
+	uint32_t val;
+
+	//assert(size_log2 == 2);
+	switch (offset) {
+	case 0xbff8:
+		val = rtc_get_time(vm);
+		break;
+	case 0xbffc:
+		val = rtc_get_time(vm) >> 32;
+		break;
+	case 0x4000:
+		val = vm->timecmp;
+		break;
+	case 0x4004:
+		val = vm->timecmp >> 32;
+		break;
+	default:
+		val = 0;
+		break;
+	}
+	return val;
+}
+
+//#define MIP_MTIP (1 << 7)
+
+static void clint_write(void* opaque, uint32_t offset, uint32_t val,
+	int size_log2)
+{
+	RiscVMachine* vm = opaque;
+
+	//assert(size_log2 == 2);
+	switch (offset) {
+	case 0x4000:
+		vm->timecmp = (vm->timecmp & ~0xffffffff) | val;
+		//riscv_cpu_reset_mip(m->cpu_state, MIP_MTIP);
+		break;
+	case 0x4004:
+		vm->timecmp = (vm->timecmp & 0xffffffff) | ((uint64_t)val << 32);
+		//riscv_cpu_reset_mip(m->cpu_state, MIP_MTIP);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -256,8 +331,10 @@ static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 void run_linux() {
 	initialize_symbols();
 	clear_state_linux(&state);
+
 	//initialize machine
-	RiscVMachine *vm = initialize_riscv_machine();
+	RiscVMachine* vm = initialize_riscv_machine();
+
 	//TODO refactor state and RiscVMachine together
 	state.memory_map = vm->mem_map;
 	//set up syscall callback
@@ -268,15 +345,21 @@ void run_linux() {
 	//the initial loader address
 	state.pc = 0x1000;
 	symbol* symbol = NULL;
-	int do_output = 0;
 	for (;;) {
+		if (state.pc == 0x80400000) {
+			print_verbose = 1;
+		}
 		word* address = get_physical_address(&state, state.pc);
-		symbol = get_symbol(symbol_list, state.pc);
-		if (do_output) {
+
+#ifdef RUN_LINUX_VERBOSE
+		if (print_verbose == 1) {
+			symbol = get_symbol(symbol_list, state.pc);
 			printf("%08x:  %08x  ", state.pc, *address);
 			printf("%s  ", symbol->name);
-		}
+	}
+#endif
 		emulate_op(&state);
+		vm->cycles = state.instruction_counter;
 	}
 }
 

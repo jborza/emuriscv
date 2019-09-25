@@ -9,3 +9,5 @@ typedef struct symbol {
 } symbol;
 
 symbol* symbol_list;
+
+symbol* add_symbol(symbol* tail, word offset, char* name);
