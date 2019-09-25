@@ -70,11 +70,7 @@ static inline uint32_t remu32(uint32_t a, uint32_t b)
 }
 
 void mul(State* state, word* instruction) {
-	PRINT_DEBUG("mul x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
-	uint32_t a = get_rs1_value(state, instruction);
-	uint32_t b = get_rs2_value(state, instruction);
-	int32_t result = mul32(a, b);
-	set_rd_value(state, instruction, result);
+	M_OP("mul", mul32);
 }
 
 void mulh(State* state, word* instruction) {

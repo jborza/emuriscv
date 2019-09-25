@@ -57,6 +57,27 @@ void amoswap_w(State* state, word* instruction) {
 	write_word(state, address, value);
 }
 
+void lr(State* state, word* instruction) {
+	PRINT_DEBUG("lr\n");
+	//loads word from address in rs1
+	word address = get_rs1_value(state, instruction);
+	word value = read_word(state, address);
+	//places sign-extended value in rd
+	set_rd_value(state, instruction, value);
+	//registers a reservation on the address
+	//TODO LR/SC reservation
+}
+
+void sc(State* state, word* instruction)
+{
+	PRINT_DEBUG("sc\n");
+	//writes a word in rs2 to the address in rs1 if reservation still exists on the address
+	word address = get_rs1_value(state, instruction);
+	word value = get_rs2_value(state, instruction);
+	//TODO LR/SC reservation
+	write_word(state, address, value);
+}
+
 //	//read data from address in rs1, place value into rd, apply binary operator to loaded value
 //	PRINT_DEBUG("amoadd.w x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 //	//load a data value from the address in *rs1*
