@@ -10,6 +10,7 @@
 #include "debug_symbols.h"
 #include "support_io.h"
 #include <time.h>
+#include "sbi.h"
 
 const int ram_size = VM_MEMORY_SIZE;
 State state;
@@ -49,8 +50,11 @@ void clear_state_linux(State* state) {
 }
 
 void linux_ecall_callback(State * state) {
+	if (state->x[SBI_WHICH] == SBI_CONSOLE_PUTCHAR) {
+		char c = (char)state->x[SBI_ARG0_REG];
+		fprintf(stderr, "%c", c);
+	}
 	return;
-	//TODO implement
 	if (state->x[SYSCALL_REG] == CONSOLE_PUTCHAR) {
 		char c = (char)state->x[SYSCALL_ARG0];
 		fprintf(stderr, "%c", c);
@@ -156,7 +160,7 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 	ram_ptr = get_ram_ptr(vm, 0);
 	uint32_t fdt_addr = BOOTLOADER_ADDRESS + 8 * 8;
 
-	char* cmd_line = "console=htifcon0";
+	char* cmd_line = LINUX_CMDLINE;
 
 #ifdef BUILD_REAL_FDT
 	riscv_build_fdt(vm, ram_ptr + fdt_addr,

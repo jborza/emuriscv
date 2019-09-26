@@ -1,6 +1,6 @@
 #pragma once
 //#define RUN_TESTS
-#define PRINT_OPCODES
+//#define PRINT_OPCODES
 
 #define RUN_LINUX
 #define RUN_LINUX_VERBOSE
@@ -13,4 +13,7 @@
 #define EXTENSION_ZICSR
 #define EXTENSION_M
 
+#define LINUX_CMDLINE ""
+
 extern int print_verbose;
+
