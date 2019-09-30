@@ -371,7 +371,17 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	tab[2] = (uint64_t)m->ram_size >> 32;
 	tab[3] = m->ram_size;
 	fdt_prop_tab_u32(s, "reg", tab, 4);
+	fdt_end_node(s); /* memory */
 
+	//HACK - second memory
+	uint32_t new_base = 0xc0000000;
+	fdt_begin_node_num(s, "memory", new_base);
+	fdt_prop_str(s, "device_type", "memory");
+	tab[0] = (uint64_t)new_base >> 32;
+	tab[1] = new_base;
+	tab[2] = (uint64_t)m->ram_size >> 32;
+	tab[3] = m->ram_size;
+	fdt_prop_tab_u32(s, "reg", tab, 4);
 	fdt_end_node(s); /* memory */
 
 	fdt_begin_node(s, "htif");
