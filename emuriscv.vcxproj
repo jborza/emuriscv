@@ -132,6 +132,7 @@
     <ClInclude Include="cpu_a.h" />
     <ClInclude Include="cpu_csr.h" />
     <ClInclude Include="cpu_m.h" />
+    <ClInclude Include="csr.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="debug_symbols.h" />
     <ClInclude Include="decode.h" />
@@ -156,6 +157,7 @@
     <ClCompile Include="cpu_csr.c" />
     <ClCompile Include="cpu_ebreak.c" />
     <ClCompile Include="cpu_m.c" />
+    <ClCompile Include="csr.c" />
     <ClCompile Include="debug.c" />
     <ClCompile Include="debug_symbols.c" />
     <ClCompile Include="decode.c" />

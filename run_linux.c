@@ -50,10 +50,12 @@ void clear_state_linux(State* state) {
 }
 
 void linux_ecall_callback(State * state) {
+#ifdef ENABLE_CONSOLE
 	if (state->x[SBI_WHICH] == SBI_CONSOLE_PUTCHAR) {
 		char c = (char)state->x[SBI_ARG0_REG];
 		fprintf(stderr, "%c", c);
 	}
+#endif
 	return;
 	if (state->x[SYSCALL_REG] == CONSOLE_PUTCHAR) {
 		char c = (char)state->x[SYSCALL_ARG0];
@@ -140,7 +142,7 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 	memcpy(ram_ptr, buf, buf_len);
 
 	//TODO load kernel
-	uint8_t* kernel_buf = read_bin("linux/vmlinux-smalldebug-rv32ia.bin", &kernel_buf_len);
+	uint8_t* kernel_buf = read_bin(LINUX_BINARY, &kernel_buf_len);
 	if(kernel_buf_len > 0) {
 		/* copy the kernel if present */
 			kernel_align = 4 << 20; /* 4 MB page align */
@@ -151,8 +153,9 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 		kernel_base = 0;
 	}
 
+	uint32_t kernel_relocated_base = 0xc0000000;
 	//HACK load the kernel to 0xc0000000 as well
-	uint8_t* hack_ptr = get_ram_ptr(vm, 0xc0000000);
+	uint8_t* hack_ptr = get_ram_ptr(vm, kernel_relocated_base);
 	memcpy(hack_ptr, kernel_buf, kernel_buf_len);
 
 
@@ -163,8 +166,12 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 	char* cmd_line = LINUX_CMDLINE;
 
 #ifdef BUILD_REAL_FDT
-	riscv_build_fdt(vm, ram_ptr + fdt_addr,
-		RAM_BASE_ADDR + kernel_base,
+	//riscv_build_fdt(vm, ram_ptr + fdt_addr,
+	//	RAM_BASE_ADDR + kernel_base,
+	//	kernel_buf_len, cmd_line);
+
+		riscv_build_fdt(vm, ram_ptr + fdt_addr,
+			kernel_relocated_base,
 		kernel_buf_len, cmd_line);
 #else
 	riscv_load_fdt("linux/spike_dts.bin", ram_ptr + fdt_addr);
@@ -203,7 +210,12 @@ symbol* get_symbol(symbol * symbol_head, word address) {
 }
 
 void console_write(const uint8_t * buf, int len) {
+#ifdef ENABLE_CONSOLE
 	fprintf(stderr, "%c", *buf);
+#endif
+#ifdef OUTPUT_CONSOLE_TO_FILE
+
+#endif
 }
 
 static uint32_t htif_read(void* opaque, uint32_t offset,
@@ -357,8 +369,14 @@ void run_linux() {
 	//the initial loader address
 	state.pc = BOOTLOADER_ADDRESS;
 	symbol* symbol = NULL;
+#ifdef PRINT_OPCODES_ALWAYS
+	print_verbose = 1;
+#endif
 	for (;;) {
 		if (state.pc == 0x80400000) {
+			print_verbose = 1;
+		}	
+		if (state.pc == 0xc0000068) {
 			print_verbose = 1;
 		}
 		word* address = get_physical_address(&state, state.pc);
