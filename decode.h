@@ -10,6 +10,7 @@ uint32_t imm_sign(word value);
 int32_t get_b_imm(word value);
 
 int32_t get_i_imm(word value);
+uint32_t get_i_imm_unsigned(word value);
 
 int32_t get_j_imm(word value);
 

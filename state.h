@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "specifications.h"
+#include "memory_map.h"
 
 typedef enum Status {
 	RUNNING,
@@ -11,6 +12,9 @@ typedef enum Status {
 typedef struct State {
 	word pc;
 	word x[REGISTERS];
-	byte* memory;
+	word csr[CSR_REGISTERS];
+	word mhartid;
 	Status status;
+	MemoryMap* memory_map;
+	word instruction_counter;
 } State;
