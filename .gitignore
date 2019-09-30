@@ -6,3 +6,6 @@
 /Debug
 /emuriscv.vcxproj.user
 /emuriscv.vcxproj.filters
+/linux*/**
+/Release
+/tools
