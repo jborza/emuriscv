@@ -95,10 +95,10 @@ RiscVMachine* initialize_riscv_machine() {
 #define DEVIO_SIZE32 4
 
 	cpu_register_device(vm->mem_map, HTIF_BASE_ADDR, HTIF_SIZE,
-		vm, htif_read, htif_write, DEVIO_SIZE32);
+		vm, htif_read, htif_write);
 
 	cpu_register_device(vm->mem_map, CLINT_BASE_ADDR, CLINT_SIZE,
-		vm, clint_read, clint_write, DEVIO_SIZE32);
+		vm, clint_read, clint_write);
 
 	return vm;
 }
@@ -190,7 +190,7 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 
 
 symbol * add_symbol(symbol * tail, word offset, char* name) {
-	symbol* current = mallocz(sizeof(symbol));
+	symbol* current = mallocz(sizeof(struct symbol));
 	current->offset = offset;
 	current->name = name;
 	if (tail != NULL)
@@ -352,10 +352,10 @@ static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 	}
 }
 
-void run_linux() {
+void run_linux() {	
 	initialize_symbols();
 	clear_state_linux(&state);
-
+	
 	//initialize machine
 	RiscVMachine* vm = initialize_riscv_machine();
 
@@ -395,6 +395,8 @@ void run_linux() {
 
 #ifdef RUN_LINUX
 int main(int argc, char* argv[]) {
+	printf("poo1");
+	
 	run_linux();
 }
 #endif

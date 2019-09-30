@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <stddef.h>
 typedef struct symbol symbol;
 
 typedef struct symbol {

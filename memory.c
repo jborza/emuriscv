@@ -1,16 +1,6 @@
 #include "memory.h"
 #include <stdio.h>
 
-void* mallocz(size_t size)
-{
-	void* ptr;
-	ptr = malloc(size);
-	if (!ptr)
-		return NULL;
-	memset(ptr, 0, size);
-	return ptr;
-}
-
 uint8_t* get_physical_address(State* state, uint32_t address) {
 	uint8_t* ptr;
 	MemoryRange* pr;

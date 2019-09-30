@@ -2,7 +2,7 @@
 #include "state.h"
 
 void emulate_op(State* state);
-inline word get_reg(State* state, int index);
+word get_reg(State* state, int index);
 int set_reg(State * state, int index, word value);
 word get_rs1_value(State* state, word* instruction);
 word get_rs2_value(State* state, word* instruction);

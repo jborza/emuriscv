@@ -21,6 +21,10 @@ int decode_opcode(word* instruction) {
 	return any->opcode;
 }
 
+word get_reg(State * state, int index) {
+	return state->x[index];
+}
+
 word get_rs1_value(State* state, word* instruction) {
 	return get_reg(state, GET_RS1(*instruction));
 }
@@ -60,10 +64,6 @@ int set_reg(State * state, int index, word value) {
 	}
 	state->x[index] = value;
 	return index;
-}
-
-inline word get_reg(State * state, int index) {
-	return state->x[index];
 }
 
 void add(State * state, word * instruction) {
@@ -290,7 +290,7 @@ void sll(State * state, word * instruction) {
 void slli(State * state, word * instruction) {
 	InstructionIShift* in = instruction;
 	PRINT_DEBUG("slli x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->shamt);
-	word value = get_reg(state, GET_RS1(*instruction)) << in->shamt;
+	word value = get_rs1_value(state, instruction) << in->shamt;
 	set_reg(state, GET_RD(*instruction), value);
 }
 
