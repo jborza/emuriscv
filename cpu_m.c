@@ -89,7 +89,7 @@ void rem(State* state, word* instruction) {
 void remu(State* state, word* instruction) {
 	M_OP("remu", remu32);
 }
-void div(State* state, word* instruction) {
+void op_div(State* state, word* instruction) {
 	M_OP("div", div32);
 }
 void divu(State* state, word* instruction) {

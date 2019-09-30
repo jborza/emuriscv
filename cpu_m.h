@@ -8,5 +8,5 @@ void mulhu(State* state, word* instruction);
 void mulhsu(State* state, word* instruction);
 void rem(State* state, word* instruction);
 void remu(State* state, word* instruction);
-void div(State* state, word* instruction);
+void op_div(State* state, word* instruction);
 void divu(State* state, word* instruction);
