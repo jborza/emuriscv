@@ -142,6 +142,7 @@
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="memory_map.h" />
+    <ClInclude Include="memory_utils.h" />
     <ClInclude Include="opcodes.h" />
     <ClInclude Include="sbi.h" />
     <ClInclude Include="specifications.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="cpu_ecall.c" />
     <ClCompile Include="fdt.c" />
     <ClCompile Include="memory_map.c" />
+    <ClCompile Include="memory_utils.c" />
     <ClCompile Include="support_io.c" />
     <ClCompile Include="test.c" />
     <ClCompile Include="memory.c" />
