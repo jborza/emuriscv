@@ -11,6 +11,8 @@
 #include "support_io.h"
 #include <time.h>
 #include "sbi.h"
+#include "memory_utils.h"
+#include <stdlib.h>
 
 const int ram_size = VM_MEMORY_SIZE;
 State state;

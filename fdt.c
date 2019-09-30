@@ -5,6 +5,8 @@
 #include "support_io.h"
 #include <memory.h>
 #include <stdarg.h>
+#include "memory_utils.h"
+#include <stdlib.h>
 
 #define FDT_MAGIC	0xd00dfeed
 #define FDT_VERSION	17

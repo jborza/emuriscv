@@ -11,6 +11,7 @@
 #include "cpu_a.h"
 #include "cpu_m.h"
 #include "csr.h"
+#include <stdlib.h>
 
 #define INS_MATCH(MASK,MATCH,HANDLER) else if ((*instruction & MASK) == MATCH) { HANDLER(state, instruction);	}
 
