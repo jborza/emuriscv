@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 #define MATCH_BEQ 0x63
 #define MASK_BEQ  0x707f
 #define MATCH_BNE 0x1063
@@ -105,3 +106,112 @@
 #define MASK_ECALL  0xffffffff
 #define MATCH_EBREAK 0x100073
 #define MASK_EBREAK  0xffffffff
+
+#ifdef EXTENSION_ZICSR
+#define MATCH_CSRRW 0x1073
+#define MASK_CSRRW  0x707f
+#define MATCH_CSRRS 0x2073
+#define MASK_CSRRS  0x707f
+#define MATCH_CSRRC 0x3073
+#define MASK_CSRRC  0x707f
+#define MATCH_CSRRWI 0x5073
+#define MASK_CSRRWI  0x707f
+#define MATCH_CSRRSI 0x6073
+#define MASK_CSRRSI  0x707f
+#define MATCH_CSRRCI 0x7073
+#define MASK_CSRRCI  0x707f
+#define MATCH_WFI 0x10500073
+#define MASK_WFI  0xffffffff
+#define MATCH_URET 0x200073
+#define MASK_URET  0xffffffff
+#define MATCH_SRET 0x10200073
+#define MASK_SRET  0xffffffff
+#define MATCH_MRET 0x30200073
+#define MASK_MRET  0xffffffff
+#define MATCH_DRET 0x7b200073
+#define MASK_DRET  0xffffffff
+#endif
+
+#ifdef EXTENSION_A
+#define MATCH_AMOADD_W 0x202f
+#define MASK_AMOADD_W  0xf800707f
+#define MATCH_AMOXOR_W 0x2000202f
+#define MASK_AMOXOR_W  0xf800707f
+#define MATCH_AMOOR_W 0x4000202f
+#define MASK_AMOOR_W  0xf800707f
+#define MATCH_AMOAND_W 0x6000202f
+#define MASK_AMOAND_W  0xf800707f
+#define MATCH_AMOMIN_W 0x8000202f
+#define MASK_AMOMIN_W  0xf800707f
+#define MATCH_AMOMAX_W 0xa000202f
+#define MASK_AMOMAX_W  0xf800707f
+#define MATCH_AMOMINU_W 0xc000202f
+#define MASK_AMOMINU_W  0xf800707f
+#define MATCH_AMOMAXU_W 0xe000202f
+#define MASK_AMOMAXU_W  0xf800707f
+#define MATCH_AMOSWAP_W 0x800202f
+#define MASK_AMOSWAP_W  0xf800707f
+#define MATCH_LR_W 0x1000202f
+#define MASK_LR_W  0xf9f0707f
+#define MATCH_SC_W 0x1800202f
+#define MASK_SC_W  0xf800707f
+#ifdef RV_64
+#define MATCH_AMOADD_D 0x302f
+#define MASK_AMOADD_D  0xf800707f
+#define MATCH_AMOXOR_D 0x2000302f
+#define MASK_AMOXOR_D  0xf800707f
+#define MATCH_AMOOR_D 0x4000302f
+#define MASK_AMOOR_D  0xf800707f
+#define MATCH_AMOAND_D 0x6000302f
+#define MASK_AMOAND_D  0xf800707f
+#define MATCH_AMOMIN_D 0x8000302f
+#define MASK_AMOMIN_D  0xf800707f
+#define MATCH_AMOMAX_D 0xa000302f
+#define MASK_AMOMAX_D  0xf800707f
+#define MATCH_AMOMINU_D 0xc000302f
+#define MASK_AMOMINU_D  0xf800707f
+#define MATCH_AMOMAXU_D 0xe000302f
+#define MASK_AMOMAXU_D  0xf800707f
+#define MATCH_AMOSWAP_D 0x800302f
+#define MASK_AMOSWAP_D  0xf800707f
+#define MATCH_LR_D 0x1000302f
+#define MASK_LR_D  0xf9f0707f
+#define MATCH_SC_D 0x1800302f
+#define MASK_SC_D  0xf800707f
+#endif
+#endif
+
+#ifdef EXTENSION_M
+#define MATCH_MUL 0x2000033
+#define MASK_MUL  0xfe00707f
+#define MATCH_MULH 0x2001033
+#define MASK_MULH  0xfe00707f
+#define MATCH_MULHSU 0x2002033
+#define MASK_MULHSU  0xfe00707f
+#define MATCH_MULHU 0x2003033
+#define MASK_MULHU  0xfe00707f
+#define MATCH_DIV 0x2004033
+#define MASK_DIV  0xfe00707f
+#define MATCH_DIVU 0x2005033
+#define MASK_DIVU  0xfe00707f
+#define MATCH_REM 0x2006033
+#define MASK_REM  0xfe00707f
+#define MATCH_REMU 0x2007033
+#define MASK_REMU  0xfe00707f
+#if RV_64
+#define MATCH_MULW 0x200003b
+#define MASK_MULW  0xfe00707f
+#define MATCH_DIVW 0x200403b
+#define MASK_DIVW  0xfe00707f
+#define MATCH_DIVUW 0x200503b
+#define MASK_DIVUW  0xfe00707f
+#define MATCH_REMW 0x200603b
+#define MASK_REMW  0xfe00707f
+#define MATCH_REMUW 0x200703b
+#define MASK_REMUW  0xfe00707f
+#endif
+#endif
+
+//supervisor memory-management fence
+#define MATCH_SFENCE_VMA 0x12000073
+#define MASK_SFENCE_VMA  0xfe007fff

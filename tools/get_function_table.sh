@@ -1,0 +1,1 @@
+cat bbl32.s | grep -E "^[0-9a-fA-F]+ <" > symbols.txt
