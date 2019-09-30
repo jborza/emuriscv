@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "config.h"
 #include "cpu.h"
+#include "cpu_ecall.h"
 #include <memory.h>
 #include "test.h"
 #include "decode.h"

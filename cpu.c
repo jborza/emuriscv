@@ -581,24 +581,14 @@ void emulate_op(State * state) {
 	else if ((*instruction & MASK_XORI) == MATCH_XORI) {
 		xori(state, instruction);
 	}
-	else if ((*instruction & MASK_CSRRS) == MATCH_CSRRS) {
-		csrrs(state, instruction);
-	}
-	else if ((*instruction & MASK_CSRRW) == MATCH_CSRRW) {
-		csrrw(state, instruction);
-	}
-	else if ((*instruction & MASK_CSRRC) == MATCH_CSRRC) {
-		csrrs(state, instruction);
-	}
-	else if ((*instruction & MASK_CSRRSI) == MATCH_CSRRSI) {
-		csrrsi(state, instruction);
-	}
-	else if ((*instruction & MASK_CSRRWI) == MATCH_CSRRWI) {
-		csrrwi(state, instruction);
-	}
-	else if ((*instruction & MASK_CSRRCI) == MATCH_CSRRCI) {
-		csrrci(state, instruction);
-	}
+#ifdef EXTENSION_ZICSR
+	INS_MATCH(MASK_CSRRS, MATCH_CSRRS, csrrs)
+	INS_MATCH(MASK_CSRRW, MATCH_CSRRW, csrrw)
+	INS_MATCH(MASK_CSRRC, MATCH_CSRRC, csrrc)
+	INS_MATCH(MASK_CSRRSI, MATCH_CSRRSI, csrrsi)
+	INS_MATCH(MASK_CSRRWI, MATCH_CSRRWI, csrrwi)
+	INS_MATCH(MASK_CSRRCI, MATCH_CSRRCI, csrrci)
+#endif
 	else if ((*instruction & MASK_WFI) == MATCH_WFI) {
 		wfi(state, instruction);
 	}
@@ -626,7 +616,7 @@ void emulate_op(State * state) {
 	INS_MATCH(MASK_MULH, MATCH_MULH, mulh)
 	INS_MATCH(MASK_MULHSU, MATCH_MULHSU, mulhsu)
 	INS_MATCH(MASK_MULHU, MATCH_MULHU, mulhu)
-	INS_MATCH(MASK_DIV, MATCH_DIV, div)
+	INS_MATCH(MASK_DIV, MATCH_DIV, op_div)
 	INS_MATCH(MASK_DIVU, MATCH_DIVU, divu)
 	INS_MATCH(MASK_REM, MATCH_REM, rem)
 	INS_MATCH(MASK_REMU, MATCH_REMU, remu)
