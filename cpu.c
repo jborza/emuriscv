@@ -627,4 +627,13 @@ void emulate_op(State * state) {
 		return;
 	}
 	state->instruction_counter++;
+	//raise exception
+	if (state->pending_exception != 0) {
+		//jump to stvec / mvec
+		state->pc = read_csr(state, CSR_STVEC);
+		//todo cause, sepc, stval, 
+
+		//clear
+		state->pending_exception = 0;
+	}
 }
