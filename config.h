@@ -1,12 +1,12 @@
 #pragma once
 //#define RUN_TESTS
-//#define PRINT_OPCODES
+#define PRINT_OPCODES
 
 //define to override "opcode" printing breakpoint
 //#define PRINT_OPCODES_ALWAYS
 
 #define RUN_LINUX
-//#define RUN_LINUX_VERBOSE
+#define RUN_LINUX_VERBOSE
 //whether to build flat device tree or load from a blobd/
 #define BUILD_REAL_FDT
 #define VM_MEMORY_SIZE 64 * 1024 * 1024
@@ -29,3 +29,4 @@
 
 extern int print_verbose;
 
+//#define HACK_SECOND_MEMORY_2G

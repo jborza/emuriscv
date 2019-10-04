@@ -1,4 +1,5 @@
 /* FDT machine description */
+#include "config.h"
 #include "fdt.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -376,6 +377,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_end_node(s); /* memory */
 
 	//HACK - second memory
+#ifdef HACK_SECOND_MEMORY_2G
 	uint32_t new_base = 0xc0000000;
 	fdt_begin_node_num(s, "memory", new_base);
 	fdt_prop_str(s, "device_type", "memory");
@@ -389,6 +391,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_begin_node(s, "htif");
 	fdt_prop_str(s, "compatible", "ucb,htif0");
 	fdt_end_node(s); /* htif */
+#endif
 
 #if 1
 	fdt_begin_node(s, "soc");
