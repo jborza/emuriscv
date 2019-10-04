@@ -1,29 +1,20 @@
 #include "memory.h"
 #include <stdio.h>
+#include "csr.h"
 
-uint8_t* get_physical_address(State* state, uint32_t address) {
-	uint8_t* ptr;
-	MemoryRange* pr;
-
-	uint32_t physical_address = address;
-
-	pr = get_phys_mem_range(state->memory_map, physical_address);
-	if (!pr) {
-		printf("get_physical_address: invalid physical address 0x%08x\n", physical_address);
-		return 0;
-	}
-	//if it's not ram, device IO
-	ptr = pr->phys_mem_ptr + (uint32_t)(physical_address - pr->address);
-	return ptr;
+//convenience function to obtain the physical address
+uint8_t* get_physical_address(State* state, uint32_t virtual_address) {
+	MemoryTarget target = get_memory_target(state, virtual_address);
+	return target.ptr;
 }
 
-word * fetch_next_word(State * state) {
-	uint8_t* address = get_physical_address(state, state->pc);
+word* fetch_next_word(State* state) {
+	MemoryTarget target = get_memory_target(state, state->pc);
 	state->pc += 4;
-	return address;
+	return target.ptr;
 }
 
-void write_common_ram(State * state, uint8_t * target, word value, int size_log2) {
+void write_common_ram(State* state, uint8_t* target, word value, int size_log2) {
 	switch (size_log2) {
 	case SIZE_WORD:
 		*(target + 3) = (value & 0xff000000) >> 24;
@@ -39,12 +30,11 @@ void write_common_ram(State * state, uint8_t * target, word value, int size_log2
 	}
 }
 
-typedef struct MemoryTarget {
-	MemoryRange* range;
-	uint8_t* ptr;
-} MemoryTarget;
+int get_memory_mode(State * state) {
+	return state->satp >> 31;
+}
 
-MemoryTarget get_memory_target(State * state, word address) {
+MemoryTarget get_memory_target_bare(State * state, word address) {
 	MemoryTarget target;
 	uint8_t* ptr;
 	uint32_t target_address = address;
@@ -59,6 +49,103 @@ MemoryTarget get_memory_target(State * state, word address) {
 	return target;
 }
 
+MemoryTarget get_memory_target_physical(State* state, word physical_address) {
+	MemoryTarget target;
+	target.range = get_phys_mem_range(state->memory_map, physical_address);
+
+	if (!target.range) {
+		printf("get_memory_target_physical: invalid physical address 0x%08x\n", physical_address);
+		//exit(1);
+		return target;
+	}
+	word range_offset = (uint32_t)(physical_address - target.range->address);
+	target.ptr = target.range->phys_mem_ptr + range_offset;
+	return target;
+}
+
+word read_word_physical(State* state, word physical_address) {
+	MemoryTarget target = get_memory_target_physical(state, physical_address);
+	return read_common_ram(state, target.ptr, SIZE_WORD);
+}
+
+word translate_address(State * state, word virtual_address, word* physical_address) {
+	//word physical_address;
+	int memory_mode = get_memory_mode(state);
+	if (memory_mode == SATP_MODE_BARE) {
+		*physical_address = virtual_address;
+	}
+	else if (memory_mode == SATP_MODE_SV32) {
+		//An Sv32 virtual address  is  partitioned  into  a virtual  page  number  (VPN)  and  page  offset,
+		//bits 0..11=offset, 12..21=vpn[0], 22..31=vpn[1]
+		word satp = read_csr(state, CSR_SATP);
+		int offset = PAGE_OFFSET >> PGDIR_SHIFT;
+		int pte_addr = (satp & (((uint32_t)1 << PTE_ADDRESS_BITS) - 1)) << PAGE_SHIFT;
+
+		int pte_bits = 12 - 2;
+		int pte_mask = (1 << pte_bits) - 1;
+
+		printf("pte @ 0x%x\n", pte_addr);
+		word pte_value = read_word_physical(state, pte_addr);
+
+		int levels = 2; //for sv32	
+		//Letptebe the value of the PTE at address a+va.vpn[i]×PTESIZE.
+		word pte; 
+		word paddr;
+
+		for (int i = 0; i < levels; i++) {
+			int vaddr_shift = PAGE_SHIFT + pte_bits * (levels - 1 - i);
+			int pte_idx = (virtual_address >> vaddr_shift) & pte_mask;
+			pte_addr += pte_idx << 2;
+			pte = read_word_physical(state, pte_addr);
+			//the V bit indicates whether the PTE is valid
+			//If pte.v= 0, or if pte.r= 0 and pte.w= 1, stop and raise a page-fault exception.
+			if (!(pte & PTE_V_MASK))
+				return PAGE_FAULT; /* invalid PTE */
+			printf("pte=0x%08x\n", pte);
+			paddr = (pte >> 10) << PAGE_SHIFT;
+			word xwr = (pte >> 1) & 7;
+			if (xwr != 0) {
+				//TODO writable pages must also be marked readable
+				word vaddr_mask = ((word)1 << vaddr_shift) - 1;
+				word result = (virtual_address & vaddr_mask) | (paddr & ~vaddr_mask);
+				*physical_address = result;
+				printf("*ppaddr=0x%x\n", result);
+			}
+			else {
+				pte_addr = paddr;
+			}
+		}
+		//
+		//TODO refactor around this to allow for more "direct" read, or another "overload" on read_common with forced mode
+		//MemoryTarget bare = get_memory_target_bare(state, pte_addr);
+		//word value = read_common_ram(state, bare.ptr, SIZE_WORD);
+
+		// When Sv32 virtual memory mode is selected in the MODE field of the satp register,
+		//supervisor virtual addresses are translated into supervisor physical addresses via a two-level page table.   
+		//The  20-bit  VPN  is  translated  into  a  22-bit  physical  page  number  (PPN),  
+		//while  the  12-bit page offset is untranslated.  
+		//The resulting supervisor-level physical addresses are then checkedusing any physical memory 
+		//protection structures (Sections 3.6), before being directly converted to machine-level physical addresses.
+		printf("pte value: 0x%x", pte_value);
+		//physical_address = -1; //raise page fault
+	}
+	else {
+		printf(__FILE__ ": error: invalid SATP mode %d", memory_mode);
+		exit(1);
+	}
+	return TRANSLATE_OK;
+}
+
+MemoryTarget get_memory_target(State * state, word virtual_address) {
+	word physical_address;
+	int result = translate_address(state, virtual_address, &physical_address);
+	if (result == PAGE_FAULT) {
+		state->pending_exception = CAUSE_LOAD_PAGE_FAULT;
+		state->pending_tval = virtual_address;
+	}
+	return get_memory_target_physical(state, physical_address);
+}
+
 void write_common(State * state, word address, word value, int size_log2) {
 	MemoryTarget target = get_memory_target(state, address);
 	if (target.range->is_ram) {
@@ -66,7 +153,7 @@ void write_common(State * state, word address, word value, int size_log2) {
 	}
 	else {
 		//device I/O
- 		target.range->write_func(target.range->opaque, target.ptr, value, size_log2);
+		target.range->write_func(target.range->opaque, target.ptr, value, size_log2);
 	}
 }
 
