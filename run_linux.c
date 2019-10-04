@@ -29,6 +29,7 @@ State state;
 int print_verbose = 0;
 
 const uint32_t BOOTLOADER_ADDRESS = 0x1000; 
+const uint32_t kernel_relocated_base = 0xc0000000;
 
 //    /* HTIF */
 static uint32_t htif_read(void* opaque, uint32_t offset,
@@ -72,12 +73,6 @@ void linux_ecall_callback(State * state) {
 		int value = state->x[SYSCALL_ARG0];
 		fprintf(stderr, "%d", value);
 	}
-	else if (state->x[SYSCALL_REG] == CONSOLE_PUTSTRING) {
-		int value = state->x[SYSCALL_ARG0];
-		//note: translate address
-		word* address = get_physical_address(state, value);
-		fprintf(stderr, "%s", address);
-	}
 }
 
 RiscVMachine* initialize_riscv_machine() {
@@ -92,7 +87,9 @@ RiscVMachine* initialize_riscv_machine() {
 	vm->mem_map = phys_mem_map_init();
 
 	cpu_register_ram(vm->mem_map, RAM_BASE_ADDR, ram_size);
-	cpu_register_ram(vm->mem_map, 0xc0000000, ram_size);
+#ifdef HACK_SECOND_MEMORY_2G
+	cpu_register_ram(vm->mem_map, kernel_relocated_base, ram_size);
+#endif
 	cpu_register_ram(vm->mem_map, 0x00000000, LOW_RAM_SIZE);
 
 #define DEVIO_SIZE32 4
@@ -156,10 +153,12 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 		kernel_base = 0;
 	}
 
-	uint32_t kernel_relocated_base = 0xc0000000;
+	
 	//HACK load the kernel to 0xc0000000 as well
+#ifdef HACK_SECOND_MEMORY_2G
 	uint8_t* hack_ptr = get_ram_ptr(vm, kernel_relocated_base);
 	memcpy(hack_ptr, kernel_buf, kernel_buf_len);
+#endif
 
 
 	//TODO load flattened device tree
@@ -169,13 +168,18 @@ void load_bios_and_kernel(RiscVMachine * vm) {
 	char* cmd_line = LINUX_CMDLINE;
 
 #ifdef BUILD_REAL_FDT
-	//riscv_build_fdt(vm, ram_ptr + fdt_addr,
-	//	RAM_BASE_ADDR + kernel_base,
-	//	kernel_buf_len, cmd_line);
 
+
+#ifdef HACK_SECOND_MEMORY_2G
 		riscv_build_fdt(vm, ram_ptr + fdt_addr,
 			kernel_relocated_base,
 		kernel_buf_len, cmd_line);
+#else
+	riscv_build_fdt(vm, ram_ptr + fdt_addr,
+		RAM_BASE_ADDR + kernel_base,
+		kernel_buf_len, cmd_line);
+#endif
+
 #else
 	riscv_load_fdt("linux/spike_dts.bin", ram_ptr + fdt_addr);
 #endif
@@ -376,16 +380,16 @@ void run_linux() {
 	print_verbose = 1;
 #endif
 	for (;;) {
-		if (state.pc == 0x80400000) {
+		if (state.pc == 0x80400068 /* relocate */) {
 			print_verbose = 1;
 		}	
-		if (state.pc == 0xc0000068) {
+		if (state.pc == 0xc0000068 /*relocate*/) {
 			print_verbose = 1;
 		}
-		word* address = get_physical_address(&state, state.pc);
 
 #ifdef RUN_LINUX_VERBOSE
 		if (print_verbose == 1) {
+			word* address = get_physical_address(&state, state.pc);
 			symbol = get_symbol(symbol_list, state.pc);
 			printf("%08x:  %08x  ", state.pc, *address);
 			printf("%s  ", symbol->name);
@@ -398,7 +402,6 @@ void run_linux() {
 
 #ifdef RUN_LINUX
 int main(int argc, char* argv[]) {
-	printf("poo1");
 	
 	run_linux();
 }
