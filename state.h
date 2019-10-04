@@ -17,4 +17,7 @@ typedef struct State {
 	Status status;
 	MemoryMap* memory_map;
 	word instruction_counter;
+	word satp;
+	word pending_tval;
+	word pending_exception;
 } State;
