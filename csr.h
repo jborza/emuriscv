@@ -16,6 +16,9 @@
 //This register holds the physical page number (PPN) of the root page table, i.e., its supervisor physical addressdivided by 4 KiB;  an address space identifier (ASID), which facilitates address-translation fenceson a per-address-space basis;  and the MODE field,  which selects the current address-translation scheme.
 #define CSR_SATP 0x180 
 
+//supervisor trap vector
+#define CSR_STVEC 0x105
+
 #define CSR_PMPCFG0 0x3A0
 #define CSR_PMPCFG1 0x3A1
 #define CSR_PMPCFG2 0x3A2
