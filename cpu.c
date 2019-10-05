@@ -453,134 +453,57 @@ void sfence_vma(State* state, word* instruction) {
 
 void emulate_op(State * state) {
 	word* instruction = fetch_next_word(state);
+	//dummy condition as opcode handlers are 'else if'
+	if (0 == 1) {
+		;
+	}
+	INS_MATCH(MASK_ADD, MATCH_ADD, add)
+	INS_MATCH(MASK_ADDI, MATCH_ADDI, addi)
+	INS_MATCH(MASK_AND, MATCH_AND, and)
+	INS_MATCH(MASK_ANDI, MATCH_ANDI, andi)
+	INS_MATCH(MASK_AUIPC, MATCH_AUIPC, auipc)
+	INS_MATCH(MASK_BEQ, MATCH_BEQ, beq)
+	INS_MATCH(MASK_BGE, MATCH_BGE, bge)
+	INS_MATCH(MASK_BGEU, MATCH_BGEU, bgeu)
+	INS_MATCH(MASK_BLT, MATCH_BLT, blt)
+	INS_MATCH(MASK_BLTU, MATCH_BLTU, bltu)
+	INS_MATCH(MASK_BNE, MATCH_BNE, bne)
+	INS_MATCH(MASK_EBREAK, MATCH_EBREAK, ebreak)
+	INS_MATCH(MASK_ECALL, MATCH_ECALL, ecall)
+	INS_MATCH(MASK_FENCE, MATCH_FENCE, fence)
+	INS_MATCH(MASK_FENCE_I, MASK_FENCE_I, fencei)
+	INS_MATCH(MASK_JAL, MATCH_JAL, jal)
+	INS_MATCH(MASK_JALR, MATCH_JALR, jalr)
+	INS_MATCH(MASK_LB, MATCH_LB, lb)
+	INS_MATCH(MASK_LBU, MATCH_LBU, lbu)
+	INS_MATCH(MASK_LH, MATCH_LH, lh)
+	INS_MATCH(MASK_LHU, MATCH_LHU, lhu)
+	INS_MATCH(MASK_LUI, MATCH_LUI, lui)
+	INS_MATCH(MASK_LW, MATCH_LW, lw)
+	INS_MATCH(MASK_OR, MATCH_OR, or )
+	INS_MATCH(MASK_ORI, MATCH_ORI, ori)
+	INS_MATCH(MASK_SB, MATCH_SB, sb)
+	INS_MATCH(MASK_SH, MATCH_SH, sh)
+	INS_MATCH(MASK_SLL, MATCH_SLL, sll)
+	INS_MATCH(MASK_SLLI, MATCH_SLLI, slli)
+	INS_MATCH(MASK_SLT, MATCH_SLT, slt)
+	INS_MATCH(MASK_SLTI, MATCH_SLTI, slti)
+	INS_MATCH(MASK_SLTIU, MATCH_SLTIU, sltiu)
+	INS_MATCH(MASK_SLTU, MATCH_SLTU, sltu)
+	INS_MATCH(MASK_SRA, MATCH_SRA, sra)
+	INS_MATCH(MASK_SRAI, MATCH_SRAI, srai)
+	INS_MATCH(MASK_SRL, MATCH_SRL, srl)
+	INS_MATCH(MASK_SRLI, MATCH_SRLI, srli)
+	INS_MATCH(MASK_SUB, MATCH_SUB, sub)
+	INS_MATCH(MASK_SW, MATCH_SW, sw)
+	INS_MATCH(MASK_XOR, MATCH_XOR, xor)
+	INS_MATCH(MASK_XORI, MATCH_XORI, xori)
 
-	//state->pc += INSTRUCTION_LENGTH_BYTES;
-	if ((*instruction & MASK_ADD) == MATCH_ADD) {
-		add(state, instruction);
-	}
-	else if ((*instruction & MASK_ADDI) == MATCH_ADDI) {
-		addi(state, instruction);
-	}
-	else if ((*instruction & MASK_AND) == MATCH_AND) {
-		and (state, instruction);
-	}
-	else if ((*instruction & MASK_ANDI) == MATCH_ANDI) {
-		andi(state, instruction);
-	}
-	else if ((*instruction & MASK_AUIPC) == MATCH_AUIPC) {
-		auipc(state, instruction);
-	}
-	else if ((*instruction & MASK_BEQ) == MATCH_BEQ) {
-		beq(state, instruction);
-	}
-	else if ((*instruction & MASK_BGE) == MATCH_BGE) {
-		bge(state, instruction);
-	}
-	else if ((*instruction & MASK_BGEU) == MATCH_BGEU) {
-		bgeu(state, instruction);
-	}
-	else if ((*instruction & MASK_BLT) == MATCH_BLT) {
-		blt(state, instruction);
-	}
-	else if ((*instruction & MASK_BLTU) == MATCH_BLTU) {
-		bltu(state, instruction);
-	}
-	else if ((*instruction & MASK_BNE) == MATCH_BNE) {
-		bne(state, instruction);
-	}
-	else if ((*instruction & MASK_EBREAK) == MATCH_EBREAK) {
-		ebreak(state, instruction);
-	}
-	else if ((*instruction & MASK_ECALL) == MATCH_ECALL) {
-		ecall(state, instruction);
-	}
-	else if ((*instruction & MASK_FENCE) == MATCH_FENCE) {
-		fence(state, instruction);
-	}
-	else if ((*instruction & MASK_FENCE_I) == MATCH_FENCE_I) {
-		fencei(state, instruction);
-	}
-	else if ((*instruction & MASK_LUI) == MATCH_LUI) {
-		lui(state, instruction);
-	}
-	else if ((*instruction & MASK_JAL) == MATCH_JAL) {
-		jal(state, instruction);
-	}
-	else if ((*instruction & MASK_JALR) == MATCH_JALR) {
-		jalr(state, instruction);
-	}
-	else if ((*instruction & MASK_LB) == MATCH_LB) {
-		lb(state, instruction);
-	}
-	else if ((*instruction & MASK_LBU) == MATCH_LBU) {
-		lbu(state, instruction);
-	}
-	else if ((*instruction & MASK_LH) == MATCH_LH) {
-		lh(state, instruction);
-	}
-	else if ((*instruction & MASK_LHU) == MATCH_LHU) {
-		lhu(state, instruction);
-	}
-	else if ((*instruction & MASK_LUI) == MATCH_LUI) {
-		lui(state, instruction);
-	}
-	else if ((*instruction & MASK_LW) == MATCH_LW) {
-		lw(state, instruction);
-	}
-	else if ((*instruction & MASK_OR) == MATCH_OR) {
-		or (state, instruction);
-	}
-	else if ((*instruction & MASK_ORI) == MATCH_ORI) {
-		ori(state, instruction);
-	}
-	else if ((*instruction & MASK_SB) == MATCH_SB) {
-		sb(state, instruction);
-	}
-	else if ((*instruction & MASK_SH) == MATCH_SH) {
-		sh(state, instruction);
-	}
-	else if ((*instruction & MASK_SLL) == MATCH_SLL) {
-		sll(state, instruction);
-	}
-	else if ((*instruction & MASK_SLLI) == MATCH_SLLI) {
-		slli(state, instruction);
-	}
-	else if ((*instruction & MASK_SLT) == MATCH_SLT) {
-		slt(state, instruction);
-	}
-	else if ((*instruction & MASK_SLTI) == MATCH_SLTI) {
-		slti(state, instruction);
-	}
-	else if ((*instruction & MASK_SLTIU) == MATCH_SLTIU) {
-		sltiu(state, instruction);
-	}
-	else if ((*instruction & MASK_SLTU) == MATCH_SLTU) {
-		sltu(state, instruction);
-	}
-	else if ((*instruction & MASK_SRA) == MATCH_SRA) {
-		sra(state, instruction);
-	}
-	else if ((*instruction & MASK_SRAI) == MATCH_SRAI) {
-		srai(state, instruction);
-	}
-	else if ((*instruction & MASK_SRL) == MATCH_SRL) {
-		srl(state, instruction);
-	}
-	else if ((*instruction & MASK_SRLI) == MATCH_SRLI) {
-		srli(state, instruction);
-	}
-	else if ((*instruction & MASK_SUB) == MATCH_SUB) {
-		sub(state, instruction);
-	}
-	else if ((*instruction & MASK_SW) == MATCH_SW) {
-		sw(state, instruction);
-	}
-	else if ((*instruction & MASK_XOR) == MATCH_XOR) {
-		xor (state, instruction);
-	}
-	else if ((*instruction & MASK_XORI) == MATCH_XORI) {
-		xori(state, instruction);
-	}
+	INS_MATCH(MASK_WFI, MATCH_WFI, wfi)
+	INS_MATCH(MASK_MRET, MATCH_MRET, mret)
+	INS_MATCH(MASK_SRET, MATCH_SRET, sret)
+	INS_MATCH(MASK_URET, MATCH_URET, uret)
+
 #ifdef EXTENSION_ZICSR
 	INS_MATCH(MASK_CSRRS, MATCH_CSRRS, csrrs)
 	INS_MATCH(MASK_CSRRW, MATCH_CSRRW, csrrw)
@@ -589,18 +512,7 @@ void emulate_op(State * state) {
 	INS_MATCH(MASK_CSRRWI, MATCH_CSRRWI, csrrwi)
 	INS_MATCH(MASK_CSRRCI, MATCH_CSRRCI, csrrci)
 #endif
-	else if ((*instruction & MASK_WFI) == MATCH_WFI) {
-		wfi(state, instruction);
-	}
-	else if ((*instruction & MASK_MRET) == MATCH_MRET) {
-		mret(state, instruction);
-	}
-	else if ((*instruction & MASK_SRET) == MATCH_SRET) {
-		sret(state, instruction);
-	}
-	else if ((*instruction & MASK_URET) == MATCH_URET) {
-		uret(state, instruction);
-	}
+	
 #ifdef EXTENSION_A
 	INS_MATCH(MASK_AMOADD_W, MATCH_AMOADD_W, amoadd_w)
 	INS_MATCH(MASK_AMOOR_W, MATCH_AMOOR_W, amoor_w)
