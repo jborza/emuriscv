@@ -31,7 +31,7 @@ void write_common_ram(State* state, uint8_t* target, word value, int size_log2) 
 }
 
 int get_memory_mode(State * state) {
-	return state->satp >> 31;
+	return read_csr(state, CSR_SATP) >> 31;
 }
 
 MemoryTarget get_memory_target_bare(State * state, word address) {
@@ -68,7 +68,8 @@ word read_word_physical(State* state, word physical_address) {
 	return read_common_ram(state, target.ptr, SIZE_WORD);
 }
 
-word translate_address(State * state, word virtual_address, word* physical_address) {
+//returns 0 on success, negative value on exception
+int translate_address(State * state, word virtual_address, word* physical_address) {
 	//word physical_address;
 	int memory_mode = get_memory_mode(state);
 	if (memory_mode == SATP_MODE_BARE) {

@@ -25,10 +25,6 @@
 #define TRANSLATE_OK 0
 #define PAGE_FAULT -1
 
-#define CAUSE_FETCH_PAGE_FAULT    0xc
-#define CAUSE_LOAD_PAGE_FAULT     0xd
-#define CAUSE_STORE_PAGE_FAULT    0xf
-
 word* fetch_next_word(State* state);
 
 word read_word(State* state, word address);

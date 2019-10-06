@@ -2,6 +2,12 @@
 #include "types.h"
 #include "specifications.h"
 #include "memory_map.h"
+#include "cause.h"	
+
+#define PRIV_M 3
+#define PRIV_RESERVED 2
+#define PRIV_S 1
+#define PRIV_U 0
 
 typedef enum Status {
 	RUNNING,
@@ -17,7 +23,8 @@ typedef struct State {
 	Status status;
 	MemoryMap* memory_map;
 	word instruction_counter;
-	word satp;
 	word pending_tval;
 	word pending_exception;
+	word mstatus;
+	int mode;
 } State;
