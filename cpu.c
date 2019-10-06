@@ -406,8 +406,6 @@ void csrrs(State * state, word * instruction) {
 
 }
 
-
-
 //privileged
 //wait for interrupt
 void wfi(State * state, word * instruction) {
@@ -449,6 +447,43 @@ void sfence_vma(State* state, word* instruction) {
 	//The supervisor memory - management fence instruction SFENCE.VMA is used to synchronize up - dates to in - memory memory - management data structures with current execution.Instruction exe - cution causes implicit readsand writes to these data structures; however, these implicit referencesare ordinarily not ordered with respect to loadsand stores in the instruction stream.Executingan  SFENCE.VMA  instruction  guarantees  that  any  stores  in  the  instruction  stream  prior  to  theSFENCE.VMA are ordered before all implicit references subsequent to the SFENCE.VMA.
 	PRINT_DEBUG("sfence.vma\r\n");
 	//no-op
+}
+
+void raise_exception(State* state, word cause, word tval) {
+
+	//word cause;
+	//jump to stvec / mvec
+	if (state->mode == PRIV_S) {
+		//sepc
+		write_csr(state, CSR_SEPC, state->pc);
+		//secause
+		write_csr(state, CSR_SCAUSE, cause);
+		//stval
+		write_csr(state, CSR_STVAL, tval);
+		//mstatus update
+		//set priv to S
+		//update PC
+		state->pc = read_csr(state, CSR_STVEC);
+	}
+	else if (state->mode == PRIV_M) {
+		//mcause
+		write_csr(state, CSR_MCAUSE, cause);
+		//mepc
+		write_csr(state, CSR_MEPC, state->pc);
+		//mtval
+		write_csr(state, CSR_MTVAL, tval);
+		//mstatus
+		//set_priv M
+		state->pc = read_csr(state, CSR_MTVEC);
+	}
+	//clear
+	state->pending_exception = 0;
+}
+
+void handle_exception(State* state) {
+	if (state->pending_exception == 0)
+		return;
+	raise_exception(state, state->pending_exception, state->pending_tval);
 }
 
 void emulate_op(State * state) {
@@ -536,16 +571,16 @@ void emulate_op(State * state) {
 
 	else {
 		printf("Unknown instruction: %8X ", *instruction);
-		return;
+		state->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
+		state->pending_tval = *instruction;
+		raise_exception(state, state->pending_exception, state->pending_tval);
 	}
 	state->instruction_counter++;
+exception:
+	raise_exception(state, state->pending_exception, state->pending_tval);
+
 	//raise exception
 	if (state->pending_exception != 0) {
-		//jump to stvec / mvec
-		state->pc = read_csr(state, CSR_STVEC);
-		//todo cause, sepc, stval, 
-
-		//clear
-		state->pending_exception = 0;
+		handle_exception(state);
 	}
 }
