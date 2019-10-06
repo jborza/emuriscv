@@ -568,7 +568,6 @@ void emulate_op(State * state) {
 	INS_MATCH(MASK_REM, MATCH_REM, rem)
 	INS_MATCH(MASK_REMU, MATCH_REMU, remu)
 #endif
-
 	else {
 		printf("Unknown instruction: %8X ", *instruction);
 		state->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
@@ -576,6 +575,7 @@ void emulate_op(State * state) {
 		raise_exception(state, state->pending_exception, state->pending_tval);
 	}
 	state->instruction_counter++;
+	return;
 exception:
 	raise_exception(state, state->pending_exception, state->pending_tval);
 

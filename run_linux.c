@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 const int ram_size = VM_MEMORY_SIZE;
-State state;
+State *state;
 
 #define SYSCALL_REG 17
 #define EXIT 93
@@ -40,7 +40,8 @@ static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 static uint32_t clint_read(void* opaque, uint32_t offset, int size_log2);
 static void clint_write(void* opaque, uint32_t offset, uint32_t val, int size_log2);
 
-void clear_state_linux(State* state) {
+State* initialize_state_linux() {
+	State* state = mallocz(sizeof(*state));
 	//TODO would be better to initialize with mallocz
 	//clear the registers
 	for (int i = 0; i < REGISTERS; i++)
@@ -51,6 +52,8 @@ void clear_state_linux(State* state) {
 	state->pc = 0;
 	state->status = RUNNING;
 	state->instruction_counter = 0;
+	state->mode = PRIV_M;
+	return state;
 }
 
 void linux_ecall_callback(State * state) {
@@ -361,48 +364,47 @@ static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 
 void run_linux() {	
 	initialize_symbols();
-	clear_state_linux(&state);
+	state = initialize_state_linux();
 	
 	//initialize machine
 	RiscVMachine* vm = initialize_riscv_machine();
 
 	//TODO refactor state and RiscVMachine together
-	state.memory_map = vm->mem_map;
+	state->memory_map = vm->mem_map;
 	//set up syscall callback
 	set_ecall_callback(&linux_ecall_callback);
 	//load bios
 	load_bios_and_kernel(vm);
 
 	//the initial loader address
-	state.pc = BOOTLOADER_ADDRESS;
+	state->pc = BOOTLOADER_ADDRESS;
 	symbol* symbol = NULL;
 #ifdef PRINT_OPCODES_ALWAYS
 	print_verbose = 1;
 #endif
 	for (;;) {
-		if (state.pc == 0x80400068 /* relocate */) {
+		if (state->pc == 0x80400068 /* relocate */) {
 			print_verbose = 1;
 		}	
-		if (state.pc == 0xc0000068 /*relocate*/) {
+		if (state->pc == 0xc0000068 /*relocate*/) {
 			print_verbose = 1;
 		}
 
 #ifdef RUN_LINUX_VERBOSE
 		if (print_verbose == 1) {
-			word* address = get_physical_address(&state, state.pc);
-			symbol = get_symbol(symbol_list, state.pc);
-			printf("%08x:  %08x  ", state.pc, *address);
+			word* address = get_physical_address(state, state->pc);
+			symbol = get_symbol(symbol_list, state->pc);
+			printf("%08x:  %08x  ", state->pc, *address);
 			printf("%s  ", symbol->name);
 	}
 #endif
-		emulate_op(&state);
-		vm->cycles = state.instruction_counter;
+		emulate_op(state);
+		vm->cycles = state->instruction_counter;
 	}
 }
 
 #ifdef RUN_LINUX
 int main(int argc, char* argv[]) {
-	
 	run_linux();
 }
 #endif
