@@ -11,7 +11,9 @@
 #include "cpu_a.h"
 #include "cpu_m.h"
 #include "csr.h"
+#include "riscv_status.h"
 #include <stdlib.h>
+
 
 #define INS_MATCH(MASK,MATCH,HANDLER) else if ((*instruction & MASK) == MATCH) { HANDLER(state, instruction);	}
 
@@ -21,6 +23,7 @@ int decode_opcode(word* instruction) {
 	//get lower OPCODE_BITS bits
 	return any->opcode;
 }
+
 
 word get_reg(State * state, int index) {
 	return state->x[index];
@@ -419,14 +422,34 @@ void wfi(State * state, word * instruction) {
 	exit(1);
 }
 
+#define get_field(reg, mask) (((reg) & (mask)) / ((mask) & ~((mask) << 1)))
+#define set_field(reg, mask, val) (((reg) & ~(mask)) | (((val) * ((mask) & ~((mask) << 1))) & (mask)))
+
 //privileged
 //return from machine-mode trap
 void mret(State * state, word * instruction) {
+	//an xRET instruction can be executed in privilege mode x or higher, where executing a lower privilege
+	//xRET instruction will pop the relevant lower-privilege interrupt enale and privilege mode stack.
 	PRINT_DEBUG("mret\n");
 	//no-op
-	//return to where??
-	//jump back to mepc?
+
+	//jump back to mepc
 	state->pc = read_csr(state, CSR_MEPC);
+
+	//////
+	//require_privilege(PRV_M);
+	//set_pc_and_serialize(p->get_state()->mepc);
+	//reg_t s = STATE.mstatus;
+	word s = read_csr(state, CSR_MSTATUS);
+	word prev_prv = get_field(s, MSTATUS_MPP);
+	//s = set_field(s, MSTATUS_MIE, get_field(s, MSTATUS_MPIE));
+	//s = set_field(s, MSTATUS_MPIE, 1);
+	//s = set_field(s, MSTATUS_MPP, PRV_U);
+	//set_privilege(prev_prv);
+	state->privilege = prev_prv;
+	//p->set_privilege(prev_prv);
+	//p->set_csr(CSR_MSTATUS, s);
+
 }
 
 //privileged
@@ -434,6 +457,7 @@ void mret(State * state, word * instruction) {
 void sret(State * state, word * instruction) {
 	PRINT_DEBUG("sret\n");
 	//no-op
+	//raise an illegal instruction operation when TSR=1 in mstatus
 }
 
 //privileged
@@ -453,7 +477,7 @@ void raise_exception(State* state, word cause, word tval) {
 
 	//word cause;
 	//jump to stvec / mvec
-	if (state->mode == PRIV_S) {
+	if (state->privilege == PRIV_S) {
 		//sepc
 		write_csr(state, CSR_SEPC, state->pc);
 		//secause
@@ -461,11 +485,11 @@ void raise_exception(State* state, word cause, word tval) {
 		//stval
 		write_csr(state, CSR_STVAL, tval);
 		//mstatus update
-		//set priv to S
+		//set priv to S - why?
 		//update PC
 		state->pc = read_csr(state, CSR_STVEC);
 	}
-	else if (state->mode == PRIV_M) {
+	else if (state->privilege == PRIV_M) {
 		//mcause
 		write_csr(state, CSR_MCAUSE, cause);
 		//mepc
@@ -473,11 +497,12 @@ void raise_exception(State* state, word cause, word tval) {
 		//mtval
 		write_csr(state, CSR_MTVAL, tval);
 		//mstatus
-		//set_priv M
+		//set_priv to M - why?
 		state->pc = read_csr(state, CSR_MTVEC);
 	}
-	//clear
+	//clear pending
 	state->pending_exception = 0;
+	state->pending_tval = 0;
 }
 
 void handle_exception(State* state) {
@@ -487,7 +512,12 @@ void handle_exception(State* state) {
 }
 
 void emulate_op(State * state) {
-	word* instruction = fetch_next_word(state);
+	MemoryTarget next_op_target;
+	int read_status = get_memory_target(state, state->pc, &next_op_target);
+	state->pc += 4;
+	if (read_status != TRANSLATE_OK)
+		goto exception;
+	word* instruction = next_op_target.ptr;
 	//dummy condition as opcode handlers are 'else if'
 	if (0 == 1) {
 		;
@@ -578,9 +608,4 @@ void emulate_op(State * state) {
 	return;
 exception:
 	raise_exception(state, state->pending_exception, state->pending_tval);
-
-	//raise exception
-	if (state->pending_exception != 0) {
-		handle_exception(state);
-	}
 }
