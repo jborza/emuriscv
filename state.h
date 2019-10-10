@@ -26,5 +26,5 @@ typedef struct State {
 	word pending_tval;
 	word pending_exception;
 	word mstatus;
-	int mode;
+	int privilege;
 } State;

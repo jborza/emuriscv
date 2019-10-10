@@ -52,7 +52,7 @@ State* initialize_state_linux() {
 	state->pc = 0;
 	state->status = RUNNING;
 	state->instruction_counter = 0;
-	state->mode = PRIV_M;
+	state->privilege = PRIV_M;
 	return state;
 }
 
@@ -389,13 +389,15 @@ void run_linux() {
 		if (state->pc == 0xc0000068 /*relocate*/) {
 			print_verbose = 1;
 		}
-
+		if (state->pc == 0x80400000 /* linux start */) {
+			print_verbose = 1;
+		}
 #ifdef RUN_LINUX_VERBOSE
 		if (print_verbose == 1) {
-			word* address = get_physical_address(state, state->pc);
-			symbol = get_symbol(symbol_list, state->pc);
-			printf("%08x:  %08x  ", state->pc, *address);
-			printf("%s  ", symbol->name);
+			//word* address = get_physical_address(state, state->pc);
+			//symbol = get_symbol(symbol_list, state->pc);
+			//printf("%08x:  %08x  ", state->pc, *address);
+			//printf("%s  ", symbol->name);
 	}
 #endif
 		emulate_op(state);

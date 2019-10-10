@@ -48,4 +48,4 @@ typedef struct MemoryTarget {
 	uint8_t* ptr;
 } MemoryTarget;
 
-MemoryTarget get_memory_target(State* state, word address);
+int get_memory_target(State* state, word address, MemoryTarget *target);

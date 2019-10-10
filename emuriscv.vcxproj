@@ -145,6 +145,7 @@
     <ClInclude Include="memory_map.h" />
     <ClInclude Include="memory_utils.h" />
     <ClInclude Include="opcodes.h" />
+    <ClInclude Include="riscv_status.h" />
     <ClInclude Include="sbi.h" />
     <ClInclude Include="specifications.h" />
     <ClInclude Include="state.h" />
