@@ -30,7 +30,13 @@ void write_common_ram(State* state, uint8_t* target, word value, int size_log2) 
 	}
 }
 
-int get_memory_mode(State * state) {
+void write_word_physical(State* state, word physical_address, word value) {
+	MemoryTarget target;
+	int status = get_memory_target_physical(state, physical_address, &target);
+	write_common_ram(state, target.ptr, value, SIZE_WORD);
+}
+
+int get_memory_mode(State* state) {
 	return read_csr(state, CSR_SATP) >> 31;
 }
 
@@ -49,7 +55,7 @@ int get_memory_mode(State * state) {
 //	return target;
 //}
 
-int get_memory_target_physical(State* state, word physical_address, MemoryTarget *target) {
+int get_memory_target_physical(State* state, word physical_address, MemoryTarget* target) {
 	//MemoryTarget target;
 	target->range = get_phys_mem_range(state->memory_map, physical_address);
 
@@ -73,7 +79,7 @@ word read_word_physical(State* state, word physical_address) {
 #define PTE_XW 6
 
 //returns 0 on success, negative value on exception
-int translate_address(State * state, word virtual_address, word* physical_address) {
+int translate_address(State * state, word virtual_address, enum access_type access_type, word * physical_address) {
 	//in machine mode no translation is happening
 	if (state->privilege == PRIV_M) {
 		*physical_address = virtual_address;
@@ -99,7 +105,7 @@ int translate_address(State * state, word virtual_address, word* physical_addres
 
 		int levels = 2; //for sv32	
 		//Letptebe the value of the PTE at address a+va.vpn[i]×PTESIZE.
-		word pte; 
+		word pte;
 		word paddr;
 
 		for (int i = 0; i < levels; i++) {
@@ -118,6 +124,27 @@ int translate_address(State * state, word virtual_address, word* physical_addres
 				//writable pages must also be marked readable (no W without R)
 				if (xwr == PTE_W || xwr == PTE_XW)
 					return PAGE_FAULT;
+				//TODO privilege check against PMP
+
+				//when a virtual page is accessed and the A bit is clear, or is written and the D bit is clear, a page-fault exception is raised
+				int accessed = pte & _PAGE_ACCESSED;
+				int dirty = (access_type == STORE) * _PAGE_DIRTY;
+
+				int accessed_or_dirty_flags = _PAGE_ACCESSED | (access_type == STORE? _PAGE_DIRTY : 0);
+				if ((pte & accessed_or_dirty_flags) != accessed_or_dirty_flags) {
+#ifdef ENABLE_DIRTY
+					pte |= accessed_or_dirty_flags;
+					//update pte 
+					write_word_physical(state, pte_addr, pte);
+#else
+					return PAGE_FAULT;
+#endif
+				}
+
+				//TODO it looks like we should be setting the accessed bit
+
+				//and 
+
 				word vaddr_mask = ((word)1 << vaddr_shift) - 1;
 				//add the virtual address offset
 				word result = (virtual_address & vaddr_mask) | (paddr & ~vaddr_mask);
@@ -150,9 +177,9 @@ int translate_address(State * state, word virtual_address, word* physical_addres
 }
 
 //returns 0 on success, negative value on exception
-int get_memory_target(State * state, word virtual_address, MemoryTarget *target) {
+int get_memory_target(State* state, word virtual_address, enum access_type access_type, MemoryTarget* target) {
 	word physical_address;
-	int result = translate_address(state, virtual_address, &physical_address);
+	int result = translate_address(state, virtual_address, access_type, &physical_address);
 	if (result == PAGE_FAULT) {
 		state->pending_exception = CAUSE_LOAD_PAGE_FAULT;
 		state->pending_tval = virtual_address;
@@ -161,12 +188,12 @@ int get_memory_target(State * state, word virtual_address, MemoryTarget *target)
 	return get_memory_target_physical(state, physical_address, target);
 }
 
-void write_common(State * state, word address, word value, int size_log2) {
+void write_common(State* state, word address, word value, int size_log2) {
 	MemoryTarget target;
 	if (state->pc == 0xc0000048) {
 		int a = 3;
 	}
-	int status = get_memory_target(state, address, &target);
+	int status = get_memory_target(state, address, STORE, &target);
 	if (target.range->is_ram) {
 		write_common_ram(state, target.ptr, value, size_log2);
 	}
@@ -176,21 +203,21 @@ void write_common(State * state, word address, word value, int size_log2) {
 	}
 }
 
-void write_word(State * state, word address, word value) {
+void write_word(State* state, word address, word value) {
 	write_common(state, address, value, SIZE_WORD);
 }
 
-void write_halfword(State * state, word address, halfword value) {
+void write_halfword(State* state, word address, halfword value) {
 	write_common(state, address, value, SIZE_HALF);
 }
 
-void write_byte(State * state, word address, byte value) {
+void write_byte(State* state, word address, byte value) {
 	write_common(state, address, value, SIZE_BYTE);
 }
 
 // READ 
 
-word read_common_ram(State * state, uint8_t * target, int size_log2) {
+word read_common_ram(State* state, uint8_t* target, int size_log2) {
 	word value;
 	switch (size_log2) {
 	case SIZE_WORD:
@@ -213,9 +240,9 @@ word read_common_ram(State * state, uint8_t * target, int size_log2) {
 	return value;
 }
 
-word read_common(State * state, word address, int size_log2) {
+word read_common(State* state, word address, int size_log2) {
 	MemoryTarget target;
-	int status = get_memory_target(state, address, &target);
+	int status = get_memory_target(state, address, LOAD, &target);
 	if (target.range->is_ram) {
 		return read_common_ram(state, target.ptr, size_log2);
 	}
@@ -225,11 +252,11 @@ word read_common(State * state, word address, int size_log2) {
 	}
 }
 
-word read_word(State * state, word address) {
+word read_word(State* state, word address) {
 	return read_common(state, address, SIZE_WORD);
 }
 
-word read_halfword_signed(State * state, word address) {
+word read_halfword_signed(State* state, word address) {
 	word value = read_common(state, address, SIZE_HALF);
 	//sign extend 16-bit value
 	if ((value & 0x8000) == 0x8000)
@@ -238,12 +265,12 @@ word read_halfword_signed(State * state, word address) {
 		return value;
 }
 
-word read_halfword_unsigned(State * state, word address) {
+word read_halfword_unsigned(State* state, word address) {
 	word value = read_common(state, address, SIZE_HALF);
 	return value;
 }
 
-word read_byte_signed(State * state, word address) {
+word read_byte_signed(State* state, word address) {
 	word value = read_common(state, address, SIZE_BYTE);
 	//sign extend 8-bit value
 	if ((value & 0x80) == 0x80)
@@ -252,7 +279,8 @@ word read_byte_signed(State * state, word address) {
 		return value;
 }
 
-word read_byte_unsigned(State * state, word address) {
+word read_byte_unsigned(State* state, word address) {
 	word value = read_common(state, address, SIZE_BYTE);
 	return value;
 }
+
