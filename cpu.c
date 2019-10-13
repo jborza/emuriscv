@@ -389,26 +389,6 @@ void xori(State * state, word * instruction) {
 	set_rd_value(state, instruction, value);
 }
 
-//atomic read & set bits in CSR
-void csrrs(State * state, word * instruction) {
-	word csr = get_i_imm_unsigned(*instruction);
-	PRINT_DEBUG("csrrs x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
-	//read old value of CSR, zero-extend to XLEN bits, write to rd
-	set_rd_value(state, instruction, state->csr[csr]);
-
-	//switch (csr) {
-	//case 0xf14: //mhardid
-	//	set_rd_value(state, instruction, state->mhartid);
-	//	break;
-	//}
-	//any bit that is high in rs1 will cause the correspoding bit to be set in CSR
-	word value = get_rs1_value(state, instruction);
-	word csr_value = state->csr[csr] | value;
-	state->csr[csr] = csr_value;
-
-
-}
-
 //privileged
 //wait for interrupt
 void wfi(State * state, word * instruction) {
@@ -513,7 +493,7 @@ void handle_exception(State* state) {
 
 void emulate_op(State * state) {
 	MemoryTarget next_op_target;
-	int read_status = get_memory_target(state, state->pc, &next_op_target);
+	int read_status = get_memory_target(state, state->pc, FETCH, &next_op_target);
 	state->pc += 4;
 	if (read_status != TRANSLATE_OK)
 		goto exception;
@@ -605,6 +585,8 @@ void emulate_op(State * state) {
 		raise_exception(state, state->pending_exception, state->pending_tval);
 	}
 	state->instruction_counter++;
+	write_csr(state, CSR_TIME, state->instruction_counter);
+	write_csr(state, CSR_CYCLE, state->instruction_counter);
 	return;
 exception:
 	raise_exception(state, state->pending_exception, state->pending_tval);

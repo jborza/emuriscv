@@ -3,6 +3,19 @@
 #include "cpu.h"
 #include "csr.h"
 
+//atomic read & set bits in CSR
+void csrrs(State* state, word* instruction) {
+	word csr = get_i_imm_unsigned(*instruction);
+	PRINT_DEBUG("csrrs x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
+	//read old value of CSR, zero-extend to XLEN bits, write to rd
+	set_rd_value(state, instruction, read_csr(state, csr));
+
+	//any bit that is high in rs1 will cause the correspoding bit to be set in CSR
+	word value = get_rs1_value(state, instruction);
+	word csr_value = read_csr(state, csr) | value;
+	write_csr(state, csr, csr_value);
+}
+
 //atomic read/write CSR
 void csrrw(State* state, word* instruction) {
 	word csr = get_i_imm_unsigned(*instruction);
