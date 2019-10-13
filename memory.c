@@ -2,17 +2,6 @@
 #include <stdio.h>
 #include "csr.h"
 
-//convenience function to obtain the physical address
-//uint8_t* get_physical_address(State* state, uint32_t virtual_address) {
-//	MemoryTarget target = get_memory_target(state, virtual_address);
-//	return target.ptr;
-//}
-
-//word* fetch_next_word(State* state) {
-//	MemoryTarget target = get_memory_target(state, state->pc);
-//	state->pc += 4;
-//	return target.ptr;
-//}
 
 void write_common_ram(State* state, uint8_t* target, word value, int size_log2) {
 	switch (size_log2) {
@@ -40,20 +29,6 @@ int get_memory_mode(State* state) {
 	return read_csr(state, CSR_SATP) >> 31;
 }
 
-//MemoryTarget get_memory_target_bare(State * state, word address, MemoryTarget *target) {
-//	MemoryTarget target;
-//	uint8_t* ptr;
-//	uint32_t target_address = address;
-//	target->range = get_phys_mem_range(state->memory_map, target_address);
-//
-//	if (!target->range) {
-//		printf("get_physical_address: invalid physical address 0x%08x\n", target_address);
-//		exit(1);
-//		return -2;
-//	}
-//	target->ptr = target->range->phys_mem_ptr + (uint32_t)(target_address - target->range->address);
-//	return target;
-//}
 
 int get_memory_target_physical(State* state, word physical_address, MemoryTarget* target) {
 	//MemoryTarget target;
@@ -104,7 +79,7 @@ int translate_address(State * state, word virtual_address, enum access_type acce
 		//printf("pte @ 0x%x\n", pte_addr);
 
 		int levels = 2; //for sv32	
-		//Letptebe the value of the PTE at address a+va.vpn[i]×PTESIZE.
+		//Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE.
 		word pte;
 		word paddr;
 
@@ -141,9 +116,6 @@ int translate_address(State * state, word virtual_address, enum access_type acce
 #endif
 				}
 
-				//TODO it looks like we should be setting the accessed bit
-
-				//and 
 
 				word vaddr_mask = ((word)1 << vaddr_shift) - 1;
 				//add the virtual address offset
