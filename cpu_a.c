@@ -19,9 +19,10 @@ For RV64, 32-bit AMOs always sign-extend the value placed in rd*/
 PRINT_DEBUG(NAME" x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction)); \
 word address = get_rs1_value(state, instruction); \
 word value = read_word(state, address); \
-set_rd_value(state, instruction, value); \
+word original_value = value; \
 value = value OP get_rs2_value(state, instruction); \
 write_word(state, address, value); \
+set_rd_value(state, instruction, original_value); \
 }
 
 //AMO_OP_W(amoadd, +)
