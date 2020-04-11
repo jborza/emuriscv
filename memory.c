@@ -76,8 +76,6 @@ int translate_address(State * state, word virtual_address, enum access_type acce
 		int pte_bits = 12 - 2;
 		int pte_mask = (1 << pte_bits) - 1;
 
-		//printf("pte @ 0x%x\n", pte_addr);
-
 		int levels = 2; //for sv32	
 		//Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE.
 		word pte;
@@ -162,10 +160,9 @@ int get_memory_target(State* state, word virtual_address, enum access_type acces
 
 void write_common(State* state, word address, word value, int size_log2) {
 	MemoryTarget target;
-	if (state->pc == 0xc0000048) {
-		int a = 3;
-	}
 	int status = get_memory_target(state, address, STORE, &target);
+	if (status == PAGE_FAULT)
+		return; //TODO something?
 	if (target.range->is_ram) {
 		write_common_ram(state, target.ptr, value, size_log2);
 	}
@@ -215,6 +212,8 @@ word read_common_ram(State* state, uint8_t* target, int size_log2) {
 word read_common(State* state, word address, int size_log2) {
 	MemoryTarget target;
 	int status = get_memory_target(state, address, LOAD, &target);
+	if (status == PAGE_FAULT)
+		return 0xcccccccc; //TODO something?
 	if (target.range->is_ram) {
 		return read_common_ram(state, target.ptr, size_log2);
 	}
