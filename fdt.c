@@ -413,6 +413,8 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_prop_tab_u64_2(s, "reg", CLINT_BASE_ADDR, CLINT_SIZE);
 
 	fdt_end_node(s); /* clint */
+	fdt_end_node(s); /* soc */
+
 #endif
 
 #if 0
@@ -461,7 +463,6 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	}
 #endif	
 
-	//fdt_end_node(s); /* soc */
 
 	fdt_begin_node(s, "chosen");
 	fdt_prop_str(s, "bootargs", cmd_line ? cmd_line : "");

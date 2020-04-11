@@ -25,8 +25,6 @@ write_word(state, address, value); \
 set_rd_value(state, instruction, original_value); \
 }
 
-//AMO_OP_W(amoadd, +)
-
 void amoadd_w(State* state, word* instruction) {
 	AMO_OP_W("amoadd.w", +)
 }
