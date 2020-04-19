@@ -29,6 +29,8 @@ word* fetch_next_word(State* state);
 
 word read_word(State* state, word address);
 
+word read_word_physical(State* state, word physical_address);
+
 word read_halfword_signed(State* state, word address);
 
 word read_halfword_unsigned(State* state, word address);

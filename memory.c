@@ -151,7 +151,12 @@ int get_memory_target(State* state, word virtual_address, enum access_type acces
 	word physical_address;
 	int result = translate_address(state, virtual_address, access_type, &physical_address);
 	if (result == PAGE_FAULT) {
-		state->pending_exception = CAUSE_LOAD_PAGE_FAULT;
+		if (access_type == LOAD)
+			state->pending_exception = CAUSE_LOAD_PAGE_FAULT;
+		else if (access_type == STORE)
+			state->pending_exception = CAUSE_STORE_PAGE_FAULT;
+		else //fetch
+			state->pending_exception = CAUSE_FETCH_PAGE_FAULT;
 		state->pending_tval = virtual_address;
 		return result;
 	}

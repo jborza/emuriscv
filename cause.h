@@ -1,4 +1,5 @@
 #pragma once
+//RISC-V privileged mode table 4.2 - scause / mcause values after trap
 #define CAUSE_MISALIGNED_FETCH 0x0
 #define CAUSE_FETCH_ACCESS 0x1
 #define CAUSE_ILLEGAL_INSTRUCTION 0x2
