@@ -73,11 +73,6 @@ void csrrsi(State* state, word* instruction) {
 	//read old value of CSR, zero-extend to XLEN bits, write to rd
 	set_rd_value(state, instruction, state->csr[csr]);
 
-	//switch (csr) {
-	//case 0xf14: //mhardid
-	//	set_rd_value(state, instruction, state->mhartid);
-	//	break;
-	//}
 	//any bit that is high in rs1 will cause the correspoding bit to be set in CSR
 	word value = GET_CSR_IMM(*instruction);// get_rs1_value(state, instruction);
 

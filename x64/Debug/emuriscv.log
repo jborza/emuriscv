@@ -1,0 +1,49 @@
+﻿  cpu.c
+c:\temp\emuriscv\cpu.c(22,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionAny *'
+c:\temp\emuriscv\cpu.c(102,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionU *'
+c:\temp\emuriscv\cpu.c(240,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionU *'
+c:\temp\emuriscv\cpu.c(263,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionI *'
+c:\temp\emuriscv\cpu.c(295,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionIShift *'
+c:\temp\emuriscv\cpu.c(318,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionI *'
+c:\temp\emuriscv\cpu.c(329,49): warning C4018: '<': signed/unsigned mismatch
+c:\temp\emuriscv\cpu.c(327,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionI *'
+c:\temp\emuriscv\cpu.c(342,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionIShift *'
+c:\temp\emuriscv\cpu.c(357,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionIShift *'
+c:\temp\emuriscv\cpu.c(386,1): warning C4133: 'initializing': incompatible types - from 'word *' to 'InstructionI *'
+c:\temp\emuriscv\cpu.c(500,1): warning C4133: 'initializing': incompatible types - from 'uint8_t *' to 'word *'
+  cpu_a.c
+  cpu_csr.c
+c:\temp\emuriscv\cpu_csr.c(8,31): warning C4013: 'get_i_imm_unsigned' undefined; assuming extern returning int
+  cpu_ebreak.c
+  cpu_ecall.c
+  cpu_m.c
+  debug.c
+  fdt.c
+c:\temp\emuriscv\fdt.c(110,50): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(135,43): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(138,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(181,13): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\fdt.c(190,13): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\fdt.c(192,13): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\fdt.c(199,45): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(216,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(228,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+c:\temp\emuriscv\fdt.c(314,26): warning C4101: 'q': unreferenced local variable
+c:\temp\emuriscv\fdt.c(313,52): warning C4101: 'plic_phandle': unreferenced local variable
+c:\temp\emuriscv\fdt.c(313,22): warning C4101: 'i': unreferenced local variable
+c:\temp\emuriscv\fdt.c(314,7): warning C4101: 'isa_string': unreferenced local variable
+c:\temp\emuriscv\fdt.c(315,11): warning C4101: 'misa': unreferenced local variable
+  run_linux.c
+c:\temp\emuriscv\run_linux.c(139,14): warning C4018: '>': signed/unsigned mismatch
+c:\temp\emuriscv\run_linux.c(239,23): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\run_linux.c(245,25): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\run_linux.c(280,10): warning C4477: 'printf' : format string '%016x' requires an argument of type 'unsigned int', but variadic argument 1 has type 'uint64_t'
+c:\temp\emuriscv\run_linux.c(280,10): message : consider using '%llx' in the format string
+c:\temp\emuriscv\run_linux.c(280,10): message : consider using '%Ix' in the format string
+c:\temp\emuriscv\run_linux.c(280,10): message : consider using '%I64x' in the format string
+c:\temp\emuriscv\run_linux.c(300,25): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\run_linux.c(306,20): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+c:\temp\emuriscv\run_linux.c(366,20): warning C4013: 'initialize_symbols' undefined; assuming extern returning int
+  test.c
+  Generating Code...
+  emuriscv.vcxproj -> C:\temp\emuriscv\x64\Debug\emuriscv.exe

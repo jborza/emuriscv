@@ -103,6 +103,7 @@ int translate_address(State * state, word virtual_address, enum access_type acce
 				int accessed = pte & _PAGE_ACCESSED;
 				int dirty = (access_type == STORE) * _PAGE_DIRTY;
 
+				//update accessed flag on all accesses and dirty flag on store
 				int accessed_or_dirty_flags = _PAGE_ACCESSED | (access_type == STORE? _PAGE_DIRTY : 0);
 				if ((pte & accessed_or_dirty_flags) != accessed_or_dirty_flags) {
 #ifdef ENABLE_DIRTY
