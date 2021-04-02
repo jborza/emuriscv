@@ -167,7 +167,6 @@ void bne(State * state, word * instruction) {
 	}
 }
 
-
 void fence(State * state, word * instruction) {
 	PRINT_DEBUG("fence [no-op]\n");
 }
@@ -516,7 +515,7 @@ void emulate_op(State * state) {
 	INS_MATCH(MASK_EBREAK, MATCH_EBREAK, ebreak)
 	INS_MATCH(MASK_ECALL, MATCH_ECALL, ecall)
 	INS_MATCH(MASK_FENCE, MATCH_FENCE, fence)
-	INS_MATCH(MASK_FENCE_I, MASK_FENCE_I, fencei)
+	INS_MATCH(MASK_FENCE_I, MATCH_FENCE_I, fencei)
 	INS_MATCH(MASK_JAL, MATCH_JAL, jal)
 	INS_MATCH(MASK_JALR, MATCH_JALR, jalr)
 	INS_MATCH(MASK_LB, MATCH_LB, lb)
