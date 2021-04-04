@@ -10,6 +10,7 @@
 #include "cpu_csr.h"
 #include "cpu_a.h"
 #include "cpu_m.h"
+#include "cpu_prv.h"
 #include "csr.h"
 #include "riscv_status.h"
 #include <stdlib.h>
@@ -386,70 +387,6 @@ void xori(State * state, word * instruction) {
 	PRINT_DEBUG("xori x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), in->imm);
 	word value = get_rs1_value(state, instruction) ^ in->imm;
 	set_rd_value(state, instruction, value);
-}
-
-//privileged
-//wait for interrupt
-void wfi(State * state, word * instruction) {
-	//wait for interrupt
-	PRINT_DEBUG("wfi\n");
-	//no-op
-	//see how many instructions we did
-	printf("WFI\r\n");
-	printf("executed %d instructions\r\n", state->instruction_counter);
-
-	exit(1);
-}
-
-#define get_field(reg, mask) (((reg) & (mask)) / ((mask) & ~((mask) << 1)))
-#define set_field(reg, mask, val) (((reg) & ~(mask)) | (((val) * ((mask) & ~((mask) << 1))) & (mask)))
-
-//privileged
-//return from machine-mode trap
-void mret(State * state, word * instruction) {
-	//an xRET instruction can be executed in privilege mode x or higher, where executing a lower privilege
-	//xRET instruction will pop the relevant lower-privilege interrupt enale and privilege mode stack.
-	PRINT_DEBUG("mret\n");
-	//no-op
-
-	//jump back to mepc
-	state->pc = read_csr(state, CSR_MEPC);
-
-	//////
-	//require_privilege(PRV_M);
-	//set_pc_and_serialize(p->get_state()->mepc);
-	//reg_t s = STATE.mstatus;
-	word s = read_csr(state, CSR_MSTATUS);
-	word prev_prv = get_field(s, MSTATUS_MPP);
-	//s = set_field(s, MSTATUS_MIE, get_field(s, MSTATUS_MPIE));
-	//s = set_field(s, MSTATUS_MPIE, 1);
-	//s = set_field(s, MSTATUS_MPP, PRV_U);
-	//set_privilege(prev_prv);
-	state->privilege = prev_prv;
-	//p->set_privilege(prev_prv);
-	//p->set_csr(CSR_MSTATUS, s);
-
-}
-
-//privileged
-//return from supervisor-mode trap
-void sret(State * state, word * instruction) {
-	PRINT_DEBUG("sret\n");
-	//no-op
-	//raise an illegal instruction operation when TSR=1 in mstatus
-}
-
-//privileged
-//return from user-mode trap
-void uret(State * state, word * instruction) {
-	PRINT_DEBUG("uret\n");
-	//no-op
-}
-
-void sfence_vma(State* state, word* instruction) {
-	//The supervisor memory - management fence instruction SFENCE.VMA is used to synchronize up - dates to in - memory memory - management data structures with current execution.Instruction exe - cution causes implicit readsand writes to these data structures; however, these implicit referencesare ordinarily not ordered with respect to loadsand stores in the instruction stream.Executingan  SFENCE.VMA  instruction  guarantees  that  any  stores  in  the  instruction  stream  prior  to  theSFENCE.VMA are ordered before all implicit references subsequent to the SFENCE.VMA.
-	PRINT_DEBUG("sfence.vma\r\n");
-	//no-op
 }
 
 void raise_exception(State* state, word cause, word tval) {
