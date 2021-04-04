@@ -311,7 +311,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 {
 	FDTState* s;
 	int size, max_xlen, i, cur_phandle, intc_phandle, plic_phandle;
-	char isa_string[128], * q;
+	char isa_string[128];
 	uint32_t misa;
 	uint32_t tab[4];
 	//FBDevice* fb_dev;
@@ -341,15 +341,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_prop_str(s, "compatible", "riscv");
 
 	max_xlen = m->max_xlen;
-	//misa = riscv_cpu_get_misa(m->cpu_state);
-	///q = isa_string;
 
-	/*q += snprintf(isa_string, sizeof(isa_string), "rv%d", max_xlen);
-	for (i = 0; i < 26; i++) {
-		if (misa & (1 << i))
-			* q++ = 'a' + i;
-	}*/
-	//*q = '\0';
 	fdt_prop_str(s, "riscv,isa", "rv32i");
 
 	fdt_prop_str(s, "mmu-type", max_xlen <= 32 ? "riscv,sv32" : "riscv,sv48");
@@ -376,23 +368,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_prop_tab_u32(s, "reg", tab, 4);
 	fdt_end_node(s); /* memory */
 
-	//HACK - second memory
-#ifdef HACK_SECOND_MEMORY_2G
-	uint32_t new_base = 0xc0000000;
-	fdt_begin_node_num(s, "memory", new_base);
-	fdt_prop_str(s, "device_type", "memory");
-	tab[0] = (uint64_t)new_base >> 32;
-	tab[1] = new_base;
-	tab[2] = (uint64_t)m->ram_size >> 32;
-	tab[3] = m->ram_size;
-	fdt_prop_tab_u32(s, "reg", tab, 4);
-	fdt_end_node(s); /* memory */
-
-	fdt_begin_node(s, "htif");
-	fdt_prop_str(s, "compatible", "ucb,htif0");
-	fdt_end_node(s); /* htif */
-#endif
-
+	//SOC, interrupts
 #if 1
 	fdt_begin_node(s, "soc");
 	fdt_prop_u32(s, "#address-cells", 2);
@@ -450,6 +426,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	}
 	
 
+	//framebuffers - maybe one day
 	fb_dev = m->common.fb_dev;
 	if (fb_dev) {
 		fdt_begin_node_num(s, "framebuffer", FRAMEBUFFER_BASE_ADDR);
