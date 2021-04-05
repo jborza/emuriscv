@@ -51,7 +51,7 @@
 #define CSR_HPMCOUNTER31 0xc1f
 #define CSR_VL 0xc20
 #define CSR_VTYPE 0xc21
-#define CSR_SSTATUS 0x100
+#define CSR_SSTATUS 0x300
 #define CSR_SIE 0x104
 //supervisor trap vector
 #define CSR_STVEC 0x105
