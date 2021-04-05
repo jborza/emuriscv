@@ -25,6 +25,6 @@ typedef struct State {
 	word instruction_counter;
 	word pending_tval;
 	word pending_exception;
-	word mstatus;
 	int privilege;
+	word load_reservation;
 } State;
