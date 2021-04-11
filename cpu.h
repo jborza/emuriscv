@@ -12,5 +12,3 @@ int set_rd_value(State* state, word* instruction, word value);
 #define GET_RS1(x) ((x >> 15) & 0x1F)
 #define GET_CSR_IMM(x) ((x >> 15) & 0x1F)
 #define GET_RS2(x) ((x >> 20) & 0x1F)
-
-void handle_exception(State* state);
