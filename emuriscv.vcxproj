@@ -132,13 +132,16 @@
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpu_a.h" />
     <ClInclude Include="cpu_csr.h" />
+    <ClInclude Include="cpu_exception.h" />
     <ClInclude Include="cpu_m.h" />
+    <ClInclude Include="cpu_prv.h" />
     <ClInclude Include="csr.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="debug_symbols.h" />
     <ClInclude Include="decode.h" />
     <ClInclude Include="cpu_ebreak.h" />
     <ClInclude Include="cpu_ecall.h" />
+    <ClInclude Include="exit_codes.h" />
     <ClInclude Include="fdt.h" />
     <ClInclude Include="instruction.h" />
     <ClInclude Include="memory.h" />
@@ -152,6 +155,7 @@
     <ClInclude Include="support_io.h" />
     <ClInclude Include="test.h" />
     <ClInclude Include="types.h" />
+    <ClInclude Include="uart.h" />
     <ClInclude Include="vm.h" />
   </ItemGroup>
   <ItemGroup>
@@ -159,7 +163,9 @@
     <ClCompile Include="cpu_a.c" />
     <ClCompile Include="cpu_csr.c" />
     <ClCompile Include="cpu_ebreak.c" />
+    <ClCompile Include="cpu_exception.c" />
     <ClCompile Include="cpu_m.c" />
+    <ClCompile Include="cpu_prv.c" />
     <ClCompile Include="csr.c" />
     <ClCompile Include="debug.c" />
     <ClCompile Include="debug_symbols.c" />
