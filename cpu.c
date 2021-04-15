@@ -206,6 +206,9 @@ void lb(State* state, word* instruction) {
 	PRINT_DEBUG("lb x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
 	word value = read_byte_signed(state, address);
+	//if there is pending exception, abort and don't write RD as we may clobber the register if RD == RS1
+	if (state->pending_exception)
+		return;
 	set_rd_value(state, instruction, value);
 }
 
@@ -215,6 +218,9 @@ void lbu(State* state, word* instruction) {
 	PRINT_DEBUG("lbu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
 	word value = read_byte_unsigned(state, address);
+	//if there is pending exception, abort and don't write RD as we may clobber the register if RD == RS1
+	if (state->pending_exception)
+		return;
 	set_rd_value(state, instruction, value);
 }
 
@@ -224,6 +230,9 @@ void lh(State* state, word* instruction) {
 	PRINT_DEBUG("lh x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
 	word value = read_halfword_signed(state, address);
+	//if there is pending exception, abort and don't write RD as we may clobber the register if RD == RS1
+	if (state->pending_exception)
+		return;
 	set_rd_value(state, instruction, value);
 }
 
@@ -233,6 +242,9 @@ void lhu(State* state, word* instruction) {
 	PRINT_DEBUG("lhu x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
 	word value = read_halfword_unsigned(state, address);
+	//if there is pending exception, abort and don't write RD as we may clobber the register if RD == RS1
+	if (state->pending_exception)
+		return;
 	set_rd_value(state, instruction, value);
 }
 
