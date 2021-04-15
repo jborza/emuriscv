@@ -14,7 +14,7 @@
 #include "cpu_prv.h"
 #include "csr.h"
 #include "cpu_exception.h"
-
+#include "exit_codes.h"
 
 #define INS_MATCH(MASK,MATCH,HANDLER) else if ((*instruction & MASK) == MATCH) { HANDLER(state, instruction);	}
 
@@ -249,6 +249,9 @@ void lw(State* state, word* instruction) {
 	PRINT_DEBUG("lw x%d,%d(x%d)\n", GET_RD(*instruction), offset, GET_RS1(*instruction));
 	word address = get_rs1_value(state, instruction) + offset;
 	word value = read_word(state, address);
+	//if there is pending exception, abort and don't write RD as we may clobber the register if RD == RS1
+	if (state->pending_exception)
+		return;
 	set_rd_value(state, instruction, value);
 }
 
@@ -347,7 +350,7 @@ void srai(State* state, word* instruction) {
 
 //shift right logical
 void srl(State* state, word* instruction) {
-	PRINT_DEBUG("sll x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
+	PRINT_DEBUG("srl x%d,x%d,x%d\n", GET_RD(*instruction), GET_RS1(*instruction), GET_RS2(*instruction));
 	unsigned int shamt = get_rs2_value(state, instruction) & 0x1F; //take the lower 5 bits as a shift amount
 	word value = get_rs1_value(state, instruction) >> shamt;
 	set_rd_value(state, instruction, value);
@@ -389,6 +392,7 @@ void xori(State* state, word* instruction) {
 	set_rd_value(state, instruction, value);
 }
 
+#ifdef  RUN_LINUX
 void print_registers(State* state) {
 	for (int i = 0; i < 32; i++) {
 		printf("x%d %08X\t", i, state->x[i]);
@@ -396,6 +400,8 @@ void print_registers(State* state) {
 			printf("\n");
 	}
 }
+#endif 
+
 
 void emulate_op(State* state) {
 	MemoryTarget next_op_target;
@@ -486,11 +492,24 @@ void emulate_op(State* state) {
 #endif
 	else {
 		printf("Unknown instruction: %8X @ PC:%8X \n", *instruction, state->pc);
+		//print_registers(state);
+		printf("PC history:\n");
+		for (int i = 0; i < PC_HISTORY_DEPTH; i++) {
+			printf("%8X\n", state->pc_history[i]);
+
+		}
+		exit(EXIT_ILLEGAL_INSTRUCTION);
 		state->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
 		state->pending_tval = *instruction;
 		raise_exception(state, state->pending_exception, state->pending_tval);
 	}
-
+	//shift pc_history left
+	for (int i = 0; i < PC_HISTORY_DEPTH - 1; i++) {
+		state->pc_history[i] = state->pc_history[i + 1];
+	}
+	if (state->has_pending_exception) {
+		raise_exception(state, state->pending_exception, state->pending_tval);
+	}
 	state->pc_history[PC_HISTORY_DEPTH - 1] = state->pc;
 	state->instruction_counter++;
 	write_csr(state, CSR_TIME, state->instruction_counter);

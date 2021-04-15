@@ -1,7 +1,7 @@
 #include "memory.h"
 #include <stdio.h>
 #include "csr.h"
-
+#include "exit_codes.h"
 
 void write_common_ram(State* state, uint8_t* target, word value, int size_log2) {
 	switch (size_log2) {
@@ -15,6 +15,7 @@ void write_common_ram(State* state, uint8_t* target, word value, int size_log2) 
 		break;
 	default:
 		fprintf(stderr, "write_common_ram unsupported size:%d", size_log2);
+		exit(EXIT_UNSUPPORTED_WRITE_SIZE);
 		break;
 	}
 }
@@ -142,7 +143,7 @@ int translate_address(State * state, word virtual_address, enum access_type acce
 	}
 	else {
 		printf(__FILE__ ": error: invalid SATP mode %d", memory_mode);
-		exit(1);
+		exit(EXIT_INVALID_SATP_MODE);
 	}
 	return TRANSLATE_OK;
 }
@@ -159,6 +160,7 @@ int get_memory_target(State* state, word virtual_address, enum access_type acces
 		else //fetch
 			state->pending_exception = CAUSE_FETCH_PAGE_FAULT;
 		state->pending_tval = virtual_address;
+		state->has_pending_exception = 1;
 		return result;
 	}
 	return get_memory_target_physical(state, physical_address, target);
@@ -168,7 +170,7 @@ void write_common(State* state, word address, word value, int size_log2) {
 	MemoryTarget target;
 	int status = get_memory_target(state, address, STORE, &target);
 	if (status == PAGE_FAULT)
-		return; //TODO something?
+		return; //exit early on page faults
 	if (target.range->is_ram) {
 		write_common_ram(state, target.ptr, value, size_log2);
 	}
@@ -209,7 +211,7 @@ word read_common_ram(State* state, uint8_t* target, int size_log2) {
 		break;
 	default:
 		fprintf(stderr, "read_common_ram unsupported size:%d", size_log2);
-		exit(1);
+		exit(EXIT_UNSUPPORTED_READ_SIZE);
 		return 0;
 	}
 	return value;
@@ -219,7 +221,7 @@ word read_common(State* state, word address, int size_log2) {
 	MemoryTarget target;
 	int status = get_memory_target(state, address, LOAD, &target);
 	if (status == PAGE_FAULT)
-		return 0xcccccccc; //TODO something?
+		return PAGE_FAULT; //TODO raise read page fault! something better?
 	if (target.range->is_ram) {
 		return read_common_ram(state, target.ptr, size_log2);
 	}

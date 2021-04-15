@@ -9,6 +9,8 @@
 #define PRIV_S 1
 #define PRIV_U 0
 
+#define PC_HISTORY_DEPTH 8
+
 typedef enum Status {
 	RUNNING,
 	BREAKPOINT,
@@ -25,6 +27,9 @@ typedef struct State {
 	word instruction_counter;
 	word pending_tval;
 	word pending_exception;
+	int has_pending_exception;
 	int privilege;
 	word load_reservation;
+
+	word pc_history[PC_HISTORY_DEPTH];
 } State;

@@ -67,4 +67,5 @@ void raise_exception(State* state, word cause, word tval) {
 	//clear pending
 	state->pending_exception = 0;
 	state->pending_tval = 0;
+	state->has_pending_exception = 0;
 }
