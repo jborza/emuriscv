@@ -4,6 +4,8 @@
 #include <memory.h>
 #include "test.h"
 #include "decode.h"
+#include "memory.h"
+#include "exit_codes.h"
 
 #ifdef RUN_TESTS
 int last_exit_code = 0;
@@ -19,7 +21,7 @@ void set_last_exit_code(int code) {
 void check_test_exit_code(State* state) {
 	if (last_exit_code == FAIL) {
 		printf("TEST FAILED! gp=0x%08x\n",state->x[3]);
-		exit(1);
+		exit(EXIT_TEST_FAILED);
 	}
 }
 
@@ -86,7 +88,7 @@ void assert_shamt(word instruction, int expected_shamt) {
 	int actual_shamt = shamt(instruction);
 	if (actual_shamt != expected_shamt) {
 		printf("Unexpected shamt value: %d, expected %d", actual_shamt, expected_shamt);
-		exit(1);
+		exit(EXIT_TEST_FAILED);
 		return;
 	}
 }
@@ -104,7 +106,7 @@ void assert_b_imm(word instruction, int expected_imm) {
 	int actual = get_b_imm(instruction);
 	if (actual != expected_imm) {
 		printf("Unexpected B-imm value: %d, expected %d", actual, expected_imm);
-		exit(1);
+		exit(EXIT_TEST_FAILED);
 		return;
 	}
 }
@@ -169,10 +171,12 @@ void test_bin(char* name) {
 	memcpy(state->memory_map[0].phys_mem_range->phys_mem_ptr, buffer, bin_file_size);
 
 	for (;;) {
-		word* address = get_physical_address(state, state->pc);
+		MemoryTarget next_op_target;
+		int read_status = get_memory_target(state, state->pc, FETCH, &next_op_target);
+		word* instruction = next_op_target.ptr;
 
 		//word* address = state.memory + state.pc;
-		printf("%08x:  %08x  ", state->pc, *address);
+		printf("%08x:  %08x  \n", state->pc, *instruction);
 		emulate_op(state);
 		//print_registers(&state);
 		if (state->status == EXIT_TERMINATION) {
@@ -252,6 +256,9 @@ void run_tests() {
 	test_bin("test/jal_long.bin");
 	test_bin("test/jal_simple.bin");
 	test_bin("test/jalr.bin");
+
+	//atomics
+	test_bin("test/amoadd.w.bin");
 
 }
 

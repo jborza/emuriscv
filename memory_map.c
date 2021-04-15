@@ -1,5 +1,6 @@
 #include "memory_map.h"
 #include <stdio.h>
+#include "exit_codes.h"
 
 MemoryRange* cpu_register_device(MemoryMap* s, uint64_t addr,
 	uint64_t size, void* opaque,
@@ -29,7 +30,7 @@ MemoryRange* register_ram_entry(MemoryMap* map, uint32_t base_addr, uint32_t siz
 	if (map->n_phys_mem_range + 1 > PHYS_MEM_RANGE_MAX)
 	{
 		fprintf(stderr, "Maximum amount of memory ranges exceeded\n");
-		exit(1);
+		exit(EXIT_TOO_MANY_MEMORY_RANGES);
 	}
 	pr = &(map->phys_mem_range[map->n_phys_mem_range++]);
 	pr->map = map;
@@ -46,7 +47,7 @@ MemoryRange* cpu_register_ram(MemoryMap* map, uint32_t base_addr, uint32_t size)
 	range->phys_mem_ptr = mallocz(size);
 	if (!range->phys_mem_ptr) {
 		fprintf(stderr, "Could not allocate VM memory\n");
-		exit(1);
+		exit(EXIT_CANNOT_ALLOCATE_VM_MEMORY);
 	}
 	return range;
 }

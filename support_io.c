@@ -1,11 +1,12 @@
 #include "support_io.h"
 #include <stdio.h>
+#include "exit_codes.h"
 
 byte* read_bin(char* name, int* bin_file_size) {
 	FILE* file = fopen(name, "rb");
 	if (!file) {
 		printf("Couldn't load test bin file '%s'!", name);
-		exit(1);
+		exit(EXIT_CANNOT_LOAD_TEST_BINARY);
 		return NULL;
 	}
 	fseek(file, 0, SEEK_END);

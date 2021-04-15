@@ -3,6 +3,7 @@
 #include "riscv_status.h"
 #include "cpu_prv.h"
 #include "debug.h"
+#include "exit_codes.h"
 
 //privileged
 //return from machine-mode trap
@@ -16,7 +17,7 @@ void mret(State* state, word* instruction) {
 	if (state->privilege != PRIV_M)
 	{
 		printf("Illegal instruction: MRET called out of machine mode\n");
-		exit(1);
+		exit(EXIT_ILLEGAL_MRET);
 	}
 	//jump back to mepc
 	state->pc = read_csr(state, CSR_MEPC);
@@ -28,20 +29,35 @@ void mret(State* state, word* instruction) {
 	s = set_field(s, MSTATUS_MPP, PRIV_U);
 	state->privilege = prev_prv;
 	write_csr(state, CSR_MSTATUS, s);
-
 }
 
 //privileged
 //return from supervisor-mode trap
 void sret(State* state, word* instruction) {
+	//When an SRET instruction(see Section[otherpriv]) is executed to return from the trap handler, 
+	//the privilege level is set to user mode if the SPP bit is 0, or supervisor mode if the SPP bit is 1; SPP is then set to 0.
 	PRINT_DEBUG("sret\n");
-	//TODO raise an illegal instruction operation when TSR=1 in mstatus
-	//as per require_privilege(get_field(STATE.mstatus, MSTATUS_TSR) ? PRV_M : PRV_S);
-	
+
+	#ifdef DEBUG_SRET
+	printf("**SRET @ pc=%X**\n", state->pc - INSTRUCTION_LENGTH_BYTES);
+	#endif
+	//When TSR=1, attempts to execute SRET while executing in S-mode will raise an illegal instruction exception. 
+	//When TSR=0, this operation is permitted in S-mode. 
+	//raise an illegal instruction operation according to TSR (Trap SRET) in mstatus
+	word tsr = get_field(read_csr(state, CSR_MSTATUS), MSTATUS_TSR);
+	int required_privilege = tsr ? PRIV_M : PRIV_S;
+	if (state->privilege != required_privilege) {
+		printf("Illegal instruction: SRET called with incorrect privilege level\n");
+		exit(EXIT_ILLEGAL_SRET);
+	}
+
 	state->pc = read_csr(state, CSR_SEPC);
 
 	word status = read_csr(state, CSR_MSTATUS);
+
 	word previous_privilege = get_field(status, MSTATUS_SPP);
+	
+
 	//set interrupt enabled status from the previous interrupt enabled
 	status = set_field(status, MSTATUS_SIE, get_field(status, MSTATUS_SPIE));
 	//set previous interrupt enabled to 1
@@ -50,6 +66,21 @@ void sret(State* state, word* instruction) {
 	status = set_field(status, MSTATUS_SPP, PRIV_U);
 	state->privilege = previous_privilege;
 	write_csr(state, CSR_MSTATUS, status);
+
+#ifdef DEBUG_SRET
+	printf("*** SRET *** tsr=%X\n", tsr);
+	printf("*** SRET *** setting pc to previous SEPC=%X\n", state->pc);
+	printf("*** SRET *** previous status=%X\n", status);
+	printf("*** SRET *** previous privilege=%x\n", previous_privilege);
+	printf("*** SRET *** new SIE=%x\n", get_field(status, MSTATUS_SPIE));
+	printf("*** SRET *** new status=%X\n", status);
+
+	printf("PC history:\n");
+	for (int i = 0; i < PC_HISTORY_DEPTH; i++) {
+		printf("%8X\n", state->pc_history[i]);
+
+	}
+#endif
 }
 
 //privileged
@@ -81,5 +112,5 @@ void wfi(State* state, word* instruction) {
 	printf("WFI\r\n");
 	printf("executed %d instructions\r\n", state->instruction_counter);
 
-	exit(1);
+	exit(EXIT_WFI);
 }
