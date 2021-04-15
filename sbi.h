@@ -14,3 +14,13 @@
 #define SBI_ARG2_REG 12 //A2 = X11
 #define SBI_ARG3_REG 13 //A3 = X11
 #define SBI_WHICH 17  //A7 = X11
+#define SBI_RETURN_REG 10 //A0 = X10
+
+//standard SBI error codes
+#define SBI_SUCCESS 0
+#define SBI_ERR_FAILED -1
+#define SBI_ERR_NOT_SUPPORTED -2
+#define SBI_ERR_INVALID_PARAM -3
+#define SBI_ERR_DENIED -4
+#define SBI_ERR_INVALID_ADDRESS -5
+#define SBI_ERR_ALREADY_AVAILABLE -6

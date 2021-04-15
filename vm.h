@@ -10,6 +10,10 @@
 #define HTIF_BASE_ADDR 0x40008000 
 #define HTIF_SIZE		16
 
+#define UART_BASE_ADDR 0x10000000 
+#define UART_SIZE		0x100
+
+
 typedef struct RiscVMachine {
 	MemoryMap* mem_map;
 	int max_xlen;
