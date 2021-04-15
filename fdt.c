@@ -323,8 +323,8 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_begin_node(s, "");
 	fdt_prop_u32(s, "#address-cells", 2);
 	fdt_prop_u32(s, "#size-cells", 2);
-	fdt_prop_str(s, "compatible", "ucbbar,riscvemu-bar_dev");
-	fdt_prop_str(s, "model", "ucbbar,riscvemu-bare");
+	fdt_prop_str(s, "compatible", "ucbbar,riscvemu-bar");
+	fdt_prop_str(s, "model", "emuriscv,emuriscv");
 
 	/* CPU list */
 	fdt_begin_node(s, "cpus");
@@ -345,7 +345,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_prop_str(s, "riscv,isa", "rv32i");
 
 	fdt_prop_str(s, "mmu-type", max_xlen <= 32 ? "riscv,sv32" : "riscv,sv48");
-	fdt_prop_u32(s, "clock-frequency", 1000000000 /*2000000000*/);
+	fdt_prop_u32(s, "clock-frequency", RTC_FREQ /*2000000000*/); //10 mhz
 
 	fdt_begin_node(s, "interrupt-controller");
 	fdt_prop_u32(s, "#interrupt-cells", 1);
@@ -389,6 +389,13 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 	fdt_prop_tab_u64_2(s, "reg", CLINT_BASE_ADDR, CLINT_SIZE);
 
 	fdt_end_node(s); /* clint */
+
+	fdt_begin_node(s, "uart", UART_BASE_ADDR);
+	fdt_prop_str(s, "compatible", "sifive,uart0");
+	fdt_prop_tab_u64_2(s, "reg", UART_BASE_ADDR, UART_SIZE);
+
+	fdt_end_node(s); /* uart */
+
 	fdt_end_node(s); /* soc */
 
 #endif
@@ -447,6 +454,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 		fdt_prop_tab_u64(s, "riscv,kernel-start", kernel_start);
 		fdt_prop_tab_u64(s, "riscv,kernel-end", kernel_start + kernel_size);
 	}
+	fdt_prop_str(s, "stdout-path", "/soc/uart@10000000");
 
 	fdt_end_node(s); /* chosen */
 
