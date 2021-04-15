@@ -18,19 +18,22 @@ void csrrs(State* state, word* instruction) {
 
 //atomic read/write CSR
 void csrrw(State* state, word* instruction) {
+	//The CSRRW (Atomic Read/Write CSR) instruction atomically swaps values
+	// in the CSRs and integer registers. CSRRW reads the old value of the CSR,
+	// zero - extends the value to XLEN bits, then writes it to integer register rd.
+	// The initial value in rs1 is written to the CSR. 
+	// If rd == x0, then the instruction shall not read the CSR
+	// and shall not cause any of the side effects that might occur on a CSR read.
 	word csr = get_i_imm_unsigned(*instruction);
 	PRINT_DEBUG("csrrw x%d,x%d,0x%08x\n", GET_RD(*instruction), GET_RS1(*instruction), csr);
 
-	//do not read CSR if rd is x0
+	//we're not supposed to read CSR if rd is x0, but it doesn't cause any side effects
+	word old_value = read_csr(state, csr);
+	write_csr(state, csr, get_rs1_value(state, instruction));
 	if (GET_RD(*instruction) != 0)
 	{
-		//read old value of CSR, zero-extend to XLEN bits, write to rd
-		word value = read_csr(state, csr);
-		//these following two sets are atomic
-		set_rd_value(state, instruction, value);
+		set_rd_value(state, instruction, old_value);
 	}
-	//write rs1 to csr
-	write_csr(state, csr, get_rs1_value(state, instruction));
 }
 
 //atomic read & clear bits in CSR
