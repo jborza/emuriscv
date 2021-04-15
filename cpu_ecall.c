@@ -7,6 +7,20 @@ void set_ecall_callback(ecall_callback_t callback) {
 }
 
 void ecall(State* state, word* instruction) {
-	PRINT_DEBUG("ecall\n");
+#ifdef RUN_TESTS //plain ecalls in test mode
 	ecall_callback(state);
+#else
+	PRINT_DEBUG("ecall\n");
+	if (state->privilege == PRIV_M) {
+		state->pending_exception = CAUSE_MACHINE_ECALL;
+	}
+	else if (state->privilege == PRIV_S) {
+		state->pending_exception = CAUSE_SUPERVISOR_ECALL;
+	}
+	else if (state->privilege == PRIV_U) {
+		state->pending_exception = CAUSE_USER_ECALL;
+	}
+	raise_exception(state, state->pending_exception, state->pending_tval);
+#endif
+	//
 }
