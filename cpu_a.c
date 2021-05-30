@@ -84,4 +84,6 @@ void sc(State* state, word* instruction)
 		//1 is the failure code
 		set_rd_value(state, instruction, 1);
 	}
+	//clear the reservation after any sc operation
+	state->load_reservation = -1;
 }
