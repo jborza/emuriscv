@@ -390,7 +390,7 @@ int riscv_build_fdt(RiscVMachine * m, uint8_t * dst,
 
 	fdt_end_node(s); /* clint */
 
-	fdt_begin_node(s, "uart", UART_BASE_ADDR);
+	fdt_begin_node_num(s, "uart", UART_BASE_ADDR);
 	fdt_prop_str(s, "compatible", "sifive,uart0");
 	fdt_prop_tab_u64_2(s, "reg", UART_BASE_ADDR, UART_SIZE);
 
