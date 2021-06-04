@@ -67,7 +67,7 @@ State* initialize_state_linux() {
 void linux_ecall_callback(State* state) {
 	//TODO switch instead of if
 #ifdef ENABLE_CONSOLE
-	if (state->x[SBI_WHICH] == SBI_CONSOLE_PUTCHAR) {
+	if (state->x[SYSCALL_REG] == SBI_CONSOLE_PUTCHAR) {
 		char c = (char)state->x[SBI_ARG0_REG];
 		fprintf(stdout, "%c", c);
 		//TODO respond with ACK?
@@ -278,24 +278,26 @@ int32_t uart_reg[7];
 
 static uint32_t uart_read(void* opaque, uint32_t offset, int size_log2)
 {
-	RiscVMachine* vm = opaque;
 	uint32_t val;
 	int offset_words = offset >> 2;
 	if (offset_words == UART_REG_TXFIFO) {
 		return 0;
 	}
+	//else if (offset_words == UART_REG_RXFIFO) {
+		//return (int)'!';
+
+	//}
 	return uart_reg[offset_words];
 }
-
 
 static void uart_write(void* opaque, uint32_t offset, uint32_t val,
 	int size_log2)
 {
-	RiscVMachine* vm = opaque;
 	int offset_words = offset >> 2;
 	uart_reg[offset_words] = val;
 	if (offset_words == UART_REG_TXFIFO) {
-		if(val!=0 && val != 0x40 && val != 0x5e)
+		//if(val!=0 && val != 0x40 && val != 0x5e)
+		if (val != 0)
 			fputc(val, stderr);
 	}
 }
