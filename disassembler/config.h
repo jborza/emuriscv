@@ -1,0 +1,3 @@
+#define EXTENSION_A
+#define EXTENSION_ZICSR
+#define EXTENSION_M

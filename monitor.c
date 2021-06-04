@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "memory.h"
 #include <stdlib.h>
+#include "disassembler/disassembler.h"
+
 static char* reg_name[32] = {
 "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
 "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
@@ -58,8 +60,9 @@ void dump_registers(State* state) {
 	printf("\n");
 }
 
+int dump_data_as_string_check_terminated(word data);
+
 void dump_value(word data) {
-	//TODO add disassembly
 	printf("%08x | %ld | ", data, data);
 	dump_data_as_string_check_terminated(data);
 	printf("\n");
@@ -270,7 +273,7 @@ int run_monitor_loop(State* state) {
 	else if (strcmp(tokens[0], "step") == 0) {
 		if (token_count > 1) {
 			size_t repeat = get_repeat(token_count, tokens);
-			for (int i = 0; i < repeat; i++) {
+			for (size_t i = 0; i < repeat; i++) {
 				//TODO hack, should be probably somewhere else
 				emulate_op(state);
 				printf(".");
