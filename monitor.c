@@ -59,13 +59,10 @@ void dump_registers(State* state) {
 }
 
 void dump_value(word data) {
-	unsigned char bytes[4];
-	bytes[0] = (data >> 24) & 0xFF;
-	bytes[1] = (data >> 16) & 0xFF;
-	bytes[2] = (data >> 8) & 0xFF;
-	bytes[3] = data & 0xFF;
 	//TODO add disassembly
-	printf("%08x | %ld | %s\n", data, data, bytes);
+	printf("%08x | %ld | ", data, data);
+	dump_data_as_string_check_terminated(data);
+	printf("\n");
 }
 
 void dump_register(State* state, char* name) {
@@ -108,7 +105,62 @@ void dump_memory_virtual(State* state, word start_address, size_t count) {
 	}
 }
 
+void disassemble_word(State* state, word start_address, size_t count) {
+	MemoryTarget memory_target;
+	for (word address = start_address; address < start_address + count * WORD_SIZE; address += WORD_SIZE) {
+		int read_status = get_memory_target(state, address, LOAD, &memory_target);
+		if (read_status != TRANSLATE_OK)
+			printf("Cannot translate virtual address %08x\n", address);
+		word data = read_word(state, address);
+		printf("%8x:\t%08x\t\t", address, data);
+		disassemble_op(&data, address);
+	}
+}
+
+int dump_data_as_string_check_terminated(word data) {
+	unsigned char bytes[5];
+	bytes[4] = 0;
+	bytes[3] = (data >> 24) & 0xFF;
+	bytes[2] = (data >> 16) & 0xFF;
+	bytes[1] = (data >> 8) & 0xFF;
+	bytes[0] = data & 0xFF;
+	printf("%s", bytes);
+	return (bytes[0] == 0 || bytes[1] == 0 || bytes[2] == 0 || bytes[3] == 0);
+}
+
+void dump_string_virtual(State* state, word start_address) {
+	MemoryTarget memory_target;
+	//read until \0
+	printf("0x%08x: ", start_address);
+
+	for (word address = start_address; ; address += WORD_SIZE) {
+		int read_status = get_memory_target(state, address, LOAD, &memory_target);
+		if (read_status != TRANSLATE_OK) {
+			printf("Cannot translate virtual address %08x\n", address);
+			break;
+		}
+		word data = read_word(state, address);
+		if (dump_data_as_string_check_terminated(data)) {
+			printf("\n");
+			break;
+		}
+	}
+}
+
+void write_memory_virtual(State* state, word address, word value) {
+	MemoryTarget memory_target;
+	int read_status = get_memory_target(state, address, LOAD, &memory_target);
+	if (read_status != TRANSLATE_OK)
+		printf("Cannot translate virtual address %08x\n", address);
+	write_word(state, address, value);
+	printf("ok.\n");
+}
+
 word get_address(char* token) {
+	return strtoul(token, NULL, 16);
+}
+
+word get_value_hex(char* token) {
 	return strtoul(token, NULL, 16);
 }
 
@@ -119,7 +171,7 @@ word get_repeat(size_t token_count, char** tokens) {
 	return repeat;
 }
 
-int run_monitor_loop(State *state){
+int run_monitor_loop(State* state) {
 	printf("(emuriscv) ");
 	char buffer[64];
 	char* tokens[10];
@@ -141,9 +193,17 @@ int run_monitor_loop(State *state){
 		printf("reg $reg - dump one register $reg (format: x7 or t0)\n");
 		printf("x $addr [n] - dump n words from virtual address $addr\n");
 		printf("xp $addr [n] - dump n words from physical address $addr\n");
+		printf("xs $addr [n] - print a null terminated string from physical address $addr\n");
+		printf("w $addr $val - write 1 words with value $val to from virtual address $addr\n");
 		printf("p $reg [n] - dump n words from virtual address pointed to by $reg\n");
 		printf("pp $reg [n] - dump n words from physical address pointed to by $reg\n");
+		printf("d $addr [n] - disassembler n words from virtual address $addr\n");
+		printf("dr $reg [n] - disassembler n words from virtual address pointed to by $reg\n");
+		printf("step [n] - do n instructions\n");
 		printf("q - quit\n");
+	}
+	else if (strcmp(tokens[0], "q") == 0) {
+		return 1;
 	}
 	else if (strcmp(tokens[0], "regs") == 0) {
 		dump_registers(state);
@@ -153,7 +213,7 @@ int run_monitor_loop(State *state){
 			dump_register(state, tokens[1]);
 	}
 	else if (strcmp(tokens[0], "p") == 0) {
-		if(token_count > 1){
+		if (token_count > 1) {
 			word address = get_register_value(state, tokens[1]);
 			size_t repeat = get_repeat(token_count, tokens);
 			dump_memory_virtual(state, address, repeat);
@@ -173,6 +233,12 @@ int run_monitor_loop(State *state){
 			dump_memory_virtual(state, address, repeat);
 		}
 	}
+	else if (strcmp(tokens[0], "xs") == 0) {
+		if (token_count > 1) {
+			word address = get_address(tokens[1]);
+			dump_string_virtual(state, address);
+		}
+	}
 	else if (strcmp(tokens[0], "xp") == 0) {
 		word address = strtoul(tokens[1], NULL, 16);
 		size_t repeat = 1;
@@ -180,12 +246,44 @@ int run_monitor_loop(State *state){
 			repeat = atoi(tokens[2]);
 		dump_memory_physical(state, address, repeat);
 	}
+	else if (strcmp(tokens[0], "w") == 0) {
+		if (token_count > 2) {
+			word address = get_address(tokens[1]);
+			word value = get_value_hex(tokens[2]);
+			write_memory_virtual(state, address, value);
+		}
+	}
+	else if (strcmp(tokens[0], "d") == 0) {
+		if (token_count > 1) {
+			word address = get_address(tokens[1]);
+			size_t repeat = get_repeat(token_count, tokens);
+			disassemble_word(state, address, repeat);
+		}
+	}
+	else if (strcmp(tokens[0], "dr") == 0) {
+		if (token_count > 1) {
+			word address = get_register_value(state, tokens[1]);
+			size_t repeat = get_repeat(token_count, tokens);
+			disassemble_word(state, address, repeat);
+		}
+	}
+	else if (strcmp(tokens[0], "step") == 0) {
+		if (token_count > 1) {
+			size_t repeat = get_repeat(token_count, tokens);
+			for (int i = 0; i < repeat; i++) {
+				//TODO hack, should be probably somewhere else
+				emulate_op(state);
+				printf(".");
+			}
+			printf("\n");
+		}
+	}
 	return 0;
 }
 
 
 void run_monitor(State* state) {
-	for(;;)
+	for (;;)
 	{
 		if (run_monitor_loop(state) != 0)
 			return;
