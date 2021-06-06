@@ -4,6 +4,7 @@
 #include "memory.h"
 #include <stdlib.h>
 #include "disassembler/disassembler.h"
+#include "debug_symbols.h"
 
 static char* reg_name[32] = {
 "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -108,6 +109,20 @@ void dump_memory_virtual(State* state, word start_address, size_t count) {
 	}
 }
 
+void dump_backtrace(State* state) {
+	MemoryTarget memory_target;
+	for (int i = 0; i < PC_HISTORY_DEPTH; i++) {
+		word address = state->pc_history[i];
+		int read_status = get_memory_target(state, address, LOAD, &memory_target);
+		if (read_status != TRANSLATE_OK)
+			printf("Cannot translate virtual address %08x\n", address);
+		word data = read_word(state, address);
+		printf("%8x:\t%08x\t\t", address, data);
+		disassemble_op(&data, address);
+	}
+}
+
+
 void disassemble_word(State* state, word start_address, size_t count) {
 	MemoryTarget memory_target;
 	for (word address = start_address; address < start_address + count * WORD_SIZE; address += WORD_SIZE) {
@@ -203,6 +218,9 @@ int run_monitor_loop(State* state) {
 		printf("d $addr [n] - disassembler n words from virtual address $addr\n");
 		printf("dr $reg [n] - disassembler n words from virtual address pointed to by $reg\n");
 		printf("step [n] - do n instructions\n");
+		printf("bt - print and disassemble the backtrace\n");
+		printf("sym - prints the current symbol\n");
+		printf("save [file]\n");
 		printf("q - quit\n");
 	}
 	else if (strcmp(tokens[0], "q") == 0) {
@@ -272,13 +290,28 @@ int run_monitor_loop(State* state) {
 	}
 	else if (strcmp(tokens[0], "step") == 0) {
 		if (token_count > 1) {
-			size_t repeat = get_repeat(token_count, tokens);
+			size_t repeat = 1;
+			if (token_count > 1)
+				repeat = atoi(tokens[1]);
+			
 			for (size_t i = 0; i < repeat; i++) {
 				//TODO hack, should be probably somewhere else
 				emulate_op(state);
 				printf(".");
 			}
 			printf("\n");
+		}
+	}
+	else if (strcmp(tokens[0], "bt") == 0) {
+		dump_backtrace(state);
+	}
+	else if (strcmp(tokens[0], "sym") == 0) {
+		symbol* symbol = get_symbol(symbol_list, state->pc);
+		printf(" %s  \n", symbol->name);
+	}
+	else if (strcmp(tokens[0], "save") == 0) {
+		if (token_count > 1) {
+			//TODO implement
 		}
 	}
 	return 0;

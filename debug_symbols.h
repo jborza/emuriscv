@@ -12,3 +12,5 @@ typedef struct symbol {
 symbol* symbol_list;
 
 symbol* add_symbol(symbol* tail, word offset, char* name);
+
+symbol* get_symbol(symbol* symbol_head, word address);

@@ -5,7 +5,7 @@
 #include "encoding.h"
 #include "../instruction.h"
 #include "../decode.h"
-#include "state.h"
+#include "../state.h"
 #include "register.h"
 
 #ifndef  WIN3
