@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "disassembler/disassembler.h"
 #include "debug_symbols.h"
+#include "loadsave.h"
 
 static char* reg_name[32] = {
 "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -196,7 +197,10 @@ int run_monitor_loop(State* state) {
 	if (fgets(buffer, 64, stdin) == NULL)
 		return -1;
 	buffer[strcspn(buffer, "\n")] = 0;
+
 	char* line = _strdup(buffer);
+	if (strlen(line) == 0)
+		return 0;
 	size_t token_count = 0;
 	for (token_count = 0; token_count < 10; token_count++) {
 		char* arg = token_count == 0 ? line : NULL;
@@ -220,7 +224,8 @@ int run_monitor_loop(State* state) {
 		printf("step [n] - do n instructions\n");
 		printf("bt - print and disassemble the backtrace\n");
 		printf("sym - prints the current symbol\n");
-		printf("save [file]\n");
+		printf("save [file] - save the state to a file\n");
+		printf("load [file] - load the state from a file\n");
 		printf("q - quit\n");
 	}
 	else if (strcmp(tokens[0], "q") == 0) {
@@ -293,7 +298,7 @@ int run_monitor_loop(State* state) {
 			size_t repeat = 1;
 			if (token_count > 1)
 				repeat = atoi(tokens[1]);
-			
+
 			for (size_t i = 0; i < repeat; i++) {
 				//TODO hack, should be probably somewhere else
 				emulate_op(state);
@@ -311,7 +316,12 @@ int run_monitor_loop(State* state) {
 	}
 	else if (strcmp(tokens[0], "save") == 0) {
 		if (token_count > 1) {
-			//TODO implement
+			save(state, tokens[1]);
+		}
+	}
+	else if (strcmp(tokens[0], "load") == 0) {
+		if (token_count > 1) {
+			load(state, tokens[1]);
 		}
 	}
 	return 0;
