@@ -19,6 +19,7 @@
 #include "uart.h"
 #include "csr.h"
 #include "exit_codes.h"
+#include "clint.h"
 
 const int ram_size = VM_MEMORY_SIZE;
 State* state;
@@ -37,9 +38,6 @@ static uint32_t htif_read(void* opaque, uint32_t offset,
 	int size_log2);
 static void htif_write(void* opaque, uint32_t offset, uint32_t val,
 	int size_log2);
-
-static uint32_t clint_read(void* opaque, uint32_t offset, int size_log2);
-static void clint_write(void* opaque, uint32_t offset, uint32_t val, int size_log2);
 
 static uint32_t uart_read(void* opaque, uint32_t offset, int size_log2);
 static void uart_write(void* opaque, uint32_t offset, uint32_t val, int size_log2);
@@ -265,23 +263,15 @@ static void htif_handle_cmd(RiscVMachine* s)
 	}
 }
 
-static uint64_t rtc_get_time(RiscVMachine* vm)
-{
-	uint64_t val;
-	//fake clock based on instructions emulated
-	val = vm->cycles;
-	return val;
-}
-
 int32_t uart_reg[7];
-
+uint64_t uart_skipped = 0;
 
 static uint32_t uart_read(void* opaque, uint32_t offset, int size_log2)
 {
 	uint32_t val;
 	int offset_words = offset >> 2;
 	if (offset_words == UART_REG_TXFIFO) {
-		return 0;
+		return 0;	//hardcoded response to the tx fifo
 	}
 	//else if (offset_words == UART_REG_RXFIFO) {
 		//return (int)'!';
@@ -296,57 +286,11 @@ static void uart_write(void* opaque, uint32_t offset, uint32_t val,
 	int offset_words = offset >> 2;
 	uart_reg[offset_words] = val;
 	if (offset_words == UART_REG_TXFIFO) {
-		//if(val!=0 && val != 0x40 && val != 0x5e)
-		if (val != 0)
+		if (val != 0 && val != 0x40 && val != 0x5e)
+			//if (val != 0)
 			fputc(val, stderr);
-	}
-}
-
-static uint32_t clint_read(void* opaque, uint32_t offset, int size_log2)
-{
-	RiscVMachine* vm = opaque;
-	uint32_t val;
-
-	//assert(size_log2 == 2);
-	switch (offset) {
-	case 0xbff8:
-		val = rtc_get_time(vm);
-		break;
-	case 0xbffc:
-		val = rtc_get_time(vm) >> 32;
-		break;
-	case 0x4000:
-		val = vm->timecmp;
-		break;
-	case 0x4004:
-		val = vm->timecmp >> 32;
-		break;
-	default:
-		val = 0;
-		break;
-	}
-	return val;
-}
-
-//#define MIP_MTIP (1 << 7)
-
-static void clint_write(void* opaque, uint32_t offset, uint32_t val,
-	int size_log2)
-{
-	RiscVMachine* vm = opaque;
-
-	//assert(size_log2 == 2);
-	switch (offset) {
-	case 0x4000:
-		vm->timecmp = (vm->timecmp & ~0xffffffff) | val;
-		//riscv_cpu_reset_mip(m->cpu_state, MIP_MTIP);
-		break;
-	case 0x4004:
-		vm->timecmp = (vm->timecmp & 0xffffffff) | ((uint64_t)val << 32);
-		//riscv_cpu_reset_mip(m->cpu_state, MIP_MTIP);
-		break;
-	default:
-		break;
+		else
+			uart_skipped++;
 	}
 }
 
@@ -408,14 +352,18 @@ void run_linux() {
 			printf(" %s  \n", symbol->name);
 		}
 #endif
-		
+
 #ifdef SAMPLE_TRACING
 		if (state->instruction_counter % sampling_period == 0) {
 			symbol = get_symbol(symbol_list, state->pc);
 			printf("%08x PRV:%s @%08ld", state->pc, state->privilege == PRIV_U ? "U" : state->privilege == PRIV_S ? "S" : "U", state->instruction_counter);
 			printf(" %s  \n", symbol->name);
 		}
+#endif
 
+#ifdef MONITOR_ON_START 
+		if (state->instruction_counter == 1000)
+			run_monitor(state);
 #endif
 		emulate_op(state);
 		vm->cycles = state->instruction_counter;
@@ -424,8 +372,6 @@ void run_linux() {
 
 #ifdef RUN_LINUX
 int main(int argc, char* argv[]) {
-	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
 	run_linux();
 }
 #endif

@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cause.h" />
+    <ClInclude Include="clint.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpu_a.h" />
@@ -150,6 +151,7 @@
     <ClInclude Include="exit_codes.h" />
     <ClInclude Include="fdt.h" />
     <ClInclude Include="instruction.h" />
+    <ClInclude Include="loadsave.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="memory_map.h" />
     <ClInclude Include="memory_utils.h" />
@@ -166,6 +168,7 @@
     <ClInclude Include="vm.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="clint.c" />
     <ClCompile Include="cpu.c" />
     <ClCompile Include="cpu_a.c" />
     <ClCompile Include="cpu_csr.c" />
@@ -181,6 +184,7 @@
     <ClCompile Include="disassembler\disassembler.c" />
     <ClCompile Include="disassembler\register.c" />
     <ClCompile Include="fdt.c" />
+    <ClCompile Include="loadsave.c" />
     <ClCompile Include="memory_map.c" />
     <ClCompile Include="memory_utils.c" />
     <ClCompile Include="monitor.c" />
@@ -193,6 +197,9 @@
     <Content Include="test\*.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
